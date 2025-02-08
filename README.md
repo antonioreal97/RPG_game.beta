@@ -1,6 +1,6 @@
 # RPG_game.beta
 RPG Game in Python
-# 🎮 Diablo 3 - Clone (Python + Pygame)
+# 🎮 RPG game (Python + Pygame)
 
 ![Game Screenshot](assets/background.png)
 
@@ -23,9 +23,11 @@ Um protótipo inspirado em *Diablo 3* feito em **Python** usando **Pygame**, com
 Este projeto é um protótipo de um **RPG de ação**, semelhante a *Diablo*, com:
 - **Movimentação do jogador** com controles `W, A, S, D`
 - **Ataques básicos** (`SPACE`)
+- **Ataque especial** (`F`)
+- **Defesa de golpes** (`Q`)
 - **Inimigos que perseguem o jogador**
 - **Sistema de inventário**
-- **Banco de dados SQLite para gerenciamento de itens**
+- **Banco de dados SQLite para gerenciamento de itens** ('Em breve...')
 
 ---
 
