@@ -8,18 +8,20 @@ class Enemy(pygame.sprite.Sprite):
     def __init__(self, pos, round_number, all_sprites, items_group):
         super().__init__()
 
-        # Obtém o caminho correto da imagem
+        # Caminho das imagens dos inimigos
         current_path = os.path.dirname(__file__)
-        assets_path = os.path.join(current_path, "assets", "enemy.png")
+        enemy_images = {
+            "Normal": os.path.join(current_path, "assets", "enemy.png"),
+            "Rápido": os.path.join(current_path, "assets", "enemy1.png"),
+            "Tanque": os.path.join(current_path, "assets", "enemy2.png"),
+        }
 
-        original_image = pygame.image.load(assets_path).convert_alpha()
-
-        # Determina tipo de inimigo
+        # Determina tipo de inimigo aleatoriamente baseado no round
         self.type = self.choose_enemy_type(round_number)
 
         # Ajustes de força do inimigo a cada 2 rounds
         strength_multiplier = 1.5 if round_number % 2 == 0 else 1
-        damage_multiplier = 1.5 if round_number % 2 == 0 else 1
+        damage_multiplier = 1 if round_number % 2 == 0 else 1
 
         # Atributos do inimigo ajustados para cada tipo
         if self.type == "Normal":
@@ -28,7 +30,7 @@ class Enemy(pygame.sprite.Sprite):
             self.attack_damage = (10 + (round_number * 2)) * damage_multiplier
             scale_factor = 1.0  # Tamanho normal
         elif self.type == "Rápido":
-            self.speed = ENEMY_SPEED + (round_number * 0.1)  # Mais rápido
+            self.speed = ENEMY_SPEED + (round_number * 0.3)  # Mais rápido
             self.health = self.max_health = (ENEMY_HEALTH + (round_number * 5)) * strength_multiplier
             self.attack_damage = (8 + (round_number * 2)) * damage_multiplier
             scale_factor = 1.2  # Levemente maior
@@ -37,6 +39,10 @@ class Enemy(pygame.sprite.Sprite):
             self.health = self.max_health = (ENEMY_HEALTH + (round_number * 20)) * strength_multiplier
             self.attack_damage = (15 + (round_number * 2.5)) * damage_multiplier
             scale_factor = 1.5  # Muito maior
+
+        # Carrega a imagem correspondente ao tipo de inimigo
+        enemy_image_path = enemy_images[self.type]
+        original_image = pygame.image.load(enemy_image_path).convert_alpha()
 
         # Aumenta o tamanho do inimigo conforme o round
         scale_factor += round_number * 0.02  # Cresce 2% por round
@@ -51,20 +57,26 @@ class Enemy(pygame.sprite.Sprite):
         self.spawn_time = pygame.time.get_ticks() + 2500  # Adiciona 2.5 segundos ao tempo atual
         self.visible = False  # Inicialmente, o inimigo está invisível
 
+        # Controle de congelamento
+        self.frozen_until = 0  # Tempo até descongelar
+
         # Grupos para spawn de itens
         self.all_sprites = all_sprites
         self.items_group = items_group
 
     def choose_enemy_type(self, round_number):
-        """Define o tipo do inimigo baseado na progressão do jogo."""
-        if round_number < 3:
-            return "Normal"
-        elif round_number % 3 == 0:
-            return "Tanque"
+        """Escolhe um tipo de inimigo aleatoriamente com base no round."""
+        enemy_types = ["Normal", "Rápido", "Tanque"]
+
+        # Maior chance de Tanque em rounds múltiplos de 3
+        if round_number % 3 == 0:
+            return random.choices(enemy_types, weights=[30, 30, 40])[0]
+        # Maior chance de Rápido em rounds pares
         elif round_number % 2 == 0:
-            return "Rápido"
+            return random.choices(enemy_types, weights=[30, 50, 20])[0]
+        # Caso contrário, distribuição balanceada
         else:
-            return "Normal"
+            return random.choice(enemy_types)
 
     def update(self, player):
         """Aguarda 3 segundos antes de se tornar visível e atacar o jogador."""
@@ -74,6 +86,10 @@ class Enemy(pygame.sprite.Sprite):
             if current_time >= self.spawn_time:
                 self.visible = True  # Torna o inimigo visível após 3 segundos
             return  # Se ainda não está visível, não faz nada
+
+        # Verifica se o inimigo está congelado
+        if current_time < self.frozen_until:
+            return  # Se ainda está congelado, não faz nada
 
         # Movimenta-se em direção ao jogador
         if player.rect.x > self.rect.x:
@@ -102,6 +118,13 @@ class Enemy(pygame.sprite.Sprite):
             print(f"☠️ {self.type} eliminado!")
             self.drop_item()  # Faz o inimigo dropar um item ao morrer
             self.kill()
+        else:
+            self.freeze_enemy()  # Congela o inimigo por 1.5 segundos
+
+    def freeze_enemy(self):
+        """Congela o inimigo por 1.5 segundos ao receber dano."""
+        self.frozen_until = pygame.time.get_ticks() + 1500
+        print(f"❄️ {self.type} ficou congelado por 1.5 segundos!")
 
     def drop_item(self):
         """Faz o inimigo dropar um item ao morrer."""
