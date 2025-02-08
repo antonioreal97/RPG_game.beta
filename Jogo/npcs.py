@@ -22,19 +22,19 @@ class NPC(pygame.sprite.Sprite):
         self.name = name
         self.dialogues = dialogues  # Lista de diálogos do NPC
         self.current_dialogue = 0  # Índice do diálogo atual
-        self.interacting = False  # Interação começa desativada
-        self.player_near = False  # Indica se o jogador está perto
-        self.finished_interaction = False  # Indica se o NPC já terminou o diálogo
+        self.interacting = False  # Inicia sem interação ativa
+        self.player_near = False  # Indica se o jogador está próximo
+        self.finished_interaction = False  # Indica se o NPC já concluiu o diálogo
 
     def check_proximity(self, player):
-        """Verifica se o jogador está perto do NPC para permitir interação."""
+        """Verifica se o jogador está próximo do NPC para permitir a interação."""
         distance = pygame.math.Vector2(self.rect.center).distance_to(player.rect.center)
-        self.player_near = distance < NPC_INTERACTION_DISTANCE  # Apenas ativa se o jogador estiver próximo
+        self.player_near = distance < NPC_INTERACTION_DISTANCE
 
     def interact(self):
         """Inicia o diálogo com o NPC quando o jogador pressiona 'X'."""
         if self.player_near and not self.finished_interaction:
-            self.interacting = True  # Ativa o modo de diálogo
+            self.interacting = True
 
     def advance_dialogue(self):
         """Avança para o próximo diálogo ao pressionar 'X'."""
@@ -43,35 +43,35 @@ class NPC(pygame.sprite.Sprite):
                 self.current_dialogue += 1
             else:
                 self.interacting = False  # Finaliza a interação quando os diálogos terminam
-                self.finished_interaction = True  # Define que o NPC já foi conversado
+                self.finished_interaction = True
 
     def draw_dialogue_box(self, screen, font):
         """Desenha a caixa de diálogo quando o NPC está interagindo."""
         if self.interacting:
             dialogue_text = self.dialogues[self.current_dialogue]
 
-            # Caixa de diálogo
+            # Configura a caixa de diálogo
             box_width, box_height = WIDTH - 100, 100
             box_x, box_y = 50, HEIGHT - 150
             pygame.draw.rect(screen, BLACK, (box_x, box_y, box_width, box_height))
             pygame.draw.rect(screen, WHITE, (box_x, box_y, box_width, box_height), 2)
 
-            # Renderiza o texto dentro da caixa
+            # Renderiza o texto do diálogo
             text_surface = font.render(f"{self.name}: {dialogue_text}", True, WHITE)
             screen.blit(text_surface, (box_x + 20, box_y + 30))
 
-            # Mensagem de continuar diálogo
+            # Instrução para continuar o diálogo
             continue_text = font.render("Pressione X para continuar...", True, WHITE)
             screen.blit(continue_text, (box_x + 20, box_y + 60))
 
     def draw_interaction_prompt(self, screen, font):
-        """Exibe um ícone indicando que o jogador pode interagir com o NPC."""
+        """Exibe um prompt indicando que o jogador pode interagir com o NPC."""
         if self.player_near and not self.interacting and not self.finished_interaction:
             prompt_text = font.render("Pressione X para falar", True, WHITE)
             screen.blit(prompt_text, (self.rect.centerx - 50, self.rect.top - 20))
 
     def end_interaction(self):
-        """Finaliza a interação do NPC para permitir a progressão do jogo."""
+        """Finaliza a interação do NPC, permitindo a progressão do jogo."""
         self.interacting = False
         self.finished_interaction = True
         print(f"✅ {self.name}: Interação concluída!")
@@ -109,6 +109,6 @@ def spawn_npc():
     ]
 
     chosen_npc = random.choice(npc_list)  # Escolhe um NPC aleatoriamente
-    pos = (random.randint(200, WIDTH - 200), random.randint(200, HEIGHT - 200))  # Posição aleatória no mapa
+    pos = (random.randint(200, WIDTH - 200), random.randint(200, HEIGHT - 200))  # Define uma posição aleatória no mapa
 
     return NPC(pos, chosen_npc["name"], chosen_npc["image"], chosen_npc["dialogues"])

@@ -16,22 +16,34 @@ class Level:
         self.round_number = 1
         self.enemy_spawn_rate = 3
         self.round_active = True
+
+        # Controle de NPC para evento de nível 5
         self.npc_active = False
         self.current_npc = None
         self.dialogue_active = False
+        self.npc_spawned_for_level5 = False  # Garante que o NPC seja spawnado apenas uma vez quando o jogador atingir o nível 5
+
         self.pending_enemies = []  # Armazena inimigos para spawn após interação
         self.create_level()
 
     def create_level(self):
-        """Cria os inimigos iniciais do nível se não houver NPC ativo."""
-        if not self.npc_active:  
+        """Cria os inimigos iniciais do nível (caso não haja NPC ativo)."""
+        if not self.npc_active:
             for _ in range(self.enemy_spawn_rate):
                 self.spawn_enemy()
 
     def update(self):
-        """Atualiza o nível, verifica mortes de inimigos e gerencia a progressão dos rounds."""
-        if self.dialogue_active:  
-            return  # Se houver diálogo ativo, pausa apenas os inimigos
+        """
+        Atualiza o nível, verifica a condição para spawn do NPC (ao atingir o nível 5),
+        gerencia as mortes dos inimigos e a progressão dos rounds.
+        """
+        if self.dialogue_active:
+            return  # Se houver diálogo ativo, pausa as ações do nível
+
+        # Se o jogador atingiu o nível 5 e o NPC ainda não foi spawnado, gera o NPC para interação
+        if self.player.level >= 5 and not self.npc_spawned_for_level5:
+            self.spawn_npc()
+            return
 
         enemies_to_remove = []
 
@@ -51,13 +63,14 @@ class Level:
         if self.enemies_killed > 0 and self.enemies_killed % 6 == 0:
             self.spawn_item()
 
+        # Se não houver inimigos ativos e não estiver ocorrendo interação com o NPC, inicia o próximo round
         if len(self.enemies_group) == 0 and self.round_active and not self.npc_active:
             self.next_round()
 
     def spawn_enemy(self):
-        """Gera um inimigo aleatório no mapa se não houver NPC ativo."""
-        if self.npc_active:  
-            return  
+        """Gera um inimigo aleatório no mapa, desde que não haja NPC ativo."""
+        if self.npc_active:
+            return
 
         pos = self.get_random_spawn_position()
         enemy = Enemy(pos, self.round_number, self.all_sprites, self.items_group)
@@ -70,22 +83,29 @@ class Level:
     def spawn_item(self):
         """Gera um item aleatório no mapa."""
         pos = self.get_random_spawn_position()
-        item_name = "Super Health Potion" if random.random() < 0.5 else random.choice(["Health Potion", "Mana Potion", "Gold Coin"])
+        item_name = (
+            "Super Health Potion"
+            if random.random() < 0.5
+            else random.choice(["Health Potion", "Mana Potion", "Gold Coin"])
+        )
         item = Item(pos, item_name)
 
-        # Adiciona o item ao jogo
         self.all_sprites.add(item)
         self.items_group.add(item)
         print(f"🆕 Item Spawnado: {item_name} na posição {pos}")
 
     def spawn_npc(self):
-        """Gera um NPC a cada 3 rodadas e pausa os inimigos enquanto ele estiver no mapa."""
-        if self.round_number % 3 == 0:
-            npc = spawn_npc()
+        """
+        Gera um NPC para interação quando o jogador atinge o nível 5,
+        pausando os inimigos enquanto o diálogo não for concluído.
+        """
+        if self.player.level >= 5 and not self.npc_spawned_for_level5:
+            npc = spawn_npc()  # Função importada de npcs.py
             self.all_sprites.add(npc)
             self.npc_group.add(npc)
             self.current_npc = npc
-            self.npc_active = True  
+            self.npc_active = True
+            self.npc_spawned_for_level5 = True
             print(f"🧙 NPC '{npc.name}' apareceu no mapa!")
 
             # Remove todos os inimigos temporariamente
@@ -98,7 +118,7 @@ class Level:
         if self.current_npc:
             self.current_npc.check_proximity(self.player)
 
-            if self.current_npc.player_near and keys[pygame.K_x]:  
+            if self.current_npc.player_near and keys[pygame.K_x]:
                 if not self.dialogue_active:
                     self.dialogue_active = True
                     self.current_npc.interact()
@@ -109,29 +129,33 @@ class Level:
                     self.end_npc_interaction()
 
     def end_npc_interaction(self):
-        """Finaliza a interação com o NPC e libera os inimigos novamente."""
+        """
+        Finaliza a interação com o NPC, removendo-o do mapa e permitindo que
+        os inimigos (ou o próximo round) sejam retomados.
+        """
         if self.current_npc:
             print(f"✅ Diálogo com {self.current_npc.name} concluído! Inimigos podem reaparecer.")
             self.npc_group.remove(self.current_npc)
             self.all_sprites.remove(self.current_npc)
             self.current_npc = None
-            self.dialogue_active = False  
-            self.npc_active = False  
+            self.dialogue_active = False
+            self.npc_active = False
 
-            # Libera os inimigos pendentes
+            # Libera os inimigos pendentes (se houver)
             for enemy in self.pending_enemies:
                 self.all_sprites.add(enemy)
                 self.enemies_group.add(enemy)
                 print(f"👿 {enemy.type} apareceu após o NPC! Vida: {enemy.health}")
 
-            self.pending_enemies = []  
+            self.pending_enemies = []
 
-            # Se não houver inimigos, inicia o próximo round
-            if len(self.enemies_group) == 0:
-                self.next_round()
+            # A retomada do combate ou do próximo round fica a critério de outra lógica/evento.
+            # Se desejar iniciar automaticamente um novo round (caso não haja inimigos), descomente:
+            # if len(self.enemies_group) == 0:
+            #     self.next_round()
 
     def next_round(self):
-        """Inicia um novo round se o NPC não estiver interagindo."""
+        """Inicia um novo round (caso não esteja ocorrendo interação com o NPC)."""
         if self.dialogue_active or self.npc_active:
             return
 
@@ -141,10 +165,10 @@ class Level:
 
         print(f"🔥 Novo Round {self.round_number}! Agora teremos {self.enemy_spawn_rate} inimigos!")
 
-        pygame.time.delay(1000)  
+        pygame.time.delay(1000)
 
-        self.spawn_npc()
-
+        # Se o jogador ainda não atingiu o nível 5 ou o evento de NPC já ocorreu, prossegue com a criação de inimigos
+        self.spawn_npc()  # Caso a condição para NPC seja satisfeita, esse método não fará nada se já foi acionado.
         if not self.npc_active:
             for _ in range(self.enemy_spawn_rate):
                 self.spawn_enemy()

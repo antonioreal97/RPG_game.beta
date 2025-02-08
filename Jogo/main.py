@@ -5,7 +5,7 @@ from settings import *
 from player import Player
 from level import Level
 import inventory_db
-from menu import menu, save_record  # Importando o menu e função para salvar recordes
+from menu import menu, save_record  # Importando o menu e a função para salvar recordes
 
 def draw_hud(screen, player, font, level):
     """Desenha a interface do jogador (HP, Mana, XP, Nível, Round e Inventário)."""
@@ -21,7 +21,7 @@ def draw_hud(screen, player, font, level):
     screen.blit(level_text, (10, 100))
     screen.blit(round_text, (10, 130))
 
-    # Exibir inventário na HUD
+    # Exibe o inventário na HUD
     inventory_text = font.render("Inventário:", True, WHITE)
     screen.blit(inventory_text, (10, 160))
     y_offset = 190
@@ -66,7 +66,7 @@ def get_player_name(screen, font):
                 elif event.key == pygame.K_BACKSPACE:
                     name = name[:-1]  # Apaga um caractere
                 else:
-                    name += event.unicode  # Adiciona a tecla pressionada ao nome
+                    name += event.unicode  # Adiciona o caractere pressionado ao nome
 
     return None
 
@@ -102,7 +102,7 @@ def main():
         all_sprites = pygame.sprite.Group()
         enemies_group = pygame.sprite.Group()
         items_group = pygame.sprite.Group()
-        npc_group = pygame.sprite.Group()  # Adicionando grupo de NPCs
+        npc_group = pygame.sprite.Group()  # Grupo para NPCs
 
         # Criação do jogador
         player = Player((WIDTH // 2, HEIGHT // 2))
@@ -121,13 +121,14 @@ def main():
                 if event.type == pygame.QUIT:
                     pygame.quit()
                     sys.exit()
+
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_SPACE:
                         player.attack(enemies_group)
                     elif event.key == pygame.K_f:  # Ataque especial
                         player.special_attack(enemies_group)
                     elif event.key == pygame.K_x:  # Interação com NPCs
-                        level.handle_npc_interaction(keys)  # 🔥 Corrigido para passar 'keys'
+                        level.handle_npc_interaction(keys)
                     elif event.key == pygame.K_i:
                         player.inventory.list_inventory()
                     elif event.key == pygame.K_h:
@@ -137,6 +138,7 @@ def main():
                     elif event.key == pygame.K_r:  # Reinicia o jogo ao morrer
                         print("🔄 Retornando ao menu...")
                         return main()  # Retorna ao menu inicial
+
                 elif event.type == pygame.USEREVENT:
                     if event.dict.get("action") == "restart":
                         print("🔄 Reiniciando jogo...")
@@ -152,7 +154,7 @@ def main():
                 items_group.update()
                 level.update()
 
-            npc_group.update()  # Atualiza NPCs
+            npc_group.update()  # Atualiza os NPCs
 
             # Verifica se o jogador morreu
             if player.health <= 0:
