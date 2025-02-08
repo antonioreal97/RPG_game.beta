@@ -7,6 +7,7 @@ class Inventory:
         """Inicializa o inventário com um limite de espaço."""
         self.capacity = capacity  # Define o tamanho máximo do inventário
         self.items = {}  # Dicionário para armazenar itens e quantidades
+        self.scroll_offset = 0  # Controle de rolagem para inventários grandes
 
     def add_item(self, item):
         """Adiciona um item ao inventário, empilhando se já existir."""
@@ -55,22 +56,24 @@ class Inventory:
     def open_inventory(self, screen, player):
         """Pausa o jogo e exibe o inventário na tela."""
         running = True
-        font = pygame.font.Font(FONT_NAME, 28)
+        font = pygame.font.Font(None, 32)  # Usa fonte padrão do Pygame
         clock = pygame.time.Clock()
 
         while running:
-            screen.fill((30, 30, 30))  # Fundo do inventário
+            screen.fill((30, 30, 30))  # Fundo escuro para o inventário
             title = font.render("🎒 Inventário", True, WHITE)
             screen.blit(title, (WIDTH // 2 - 80, 50))
 
-            y_offset = 120
-            for idx, (item_name, details) in enumerate(self.items.items()):
+            y_offset = 120 - self.scroll_offset
+            visible_items = list(self.items.items())[self.scroll_offset:self.scroll_offset + 7]
+
+            for idx, (item_name, details) in enumerate(visible_items):
                 text = font.render(f"{idx + 1}. {item_name} (x{details['quantity']})", True, WHITE)
                 screen.blit(text, (WIDTH // 2 - 150, y_offset))
                 y_offset += 40
 
-            instructions = font.render("Pressione 1-9 para usar itens | Pressione I para sair", True, WHITE)
-            screen.blit(instructions, (WIDTH // 2 - 250, HEIGHT - 100))
+            instructions = font.render("Use ↑ / ↓ para rolar | Pressione I para sair", True, WHITE)
+            screen.blit(instructions, (WIDTH // 2 - 250, HEIGHT - 80))
 
             pygame.display.flip()
             clock.tick(30)
@@ -82,7 +85,13 @@ class Inventory:
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_i:
                         return  # Fecha o inventário e retorna ao jogo
-                    
+                    elif event.key == pygame.K_DOWN:
+                        if self.scroll_offset < max(0, len(self.items) - 7):
+                            self.scroll_offset += 1  # Rola para baixo
+                    elif event.key == pygame.K_UP:
+                        if self.scroll_offset > 0:
+                            self.scroll_offset -= 1  # Rola para cima
+
                     # Verifica se o jogador pressionou um número para usar um item
                     if pygame.K_1 <= event.key <= pygame.K_9:
                         item_index = event.key - pygame.K_1  # Converte a tecla para índice

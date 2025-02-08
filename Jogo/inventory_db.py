@@ -1,45 +1,36 @@
-# inventory_db.py
-import sqlite3
 import os
+from pymongo import MongoClient
+from dotenv import load_dotenv
 
-DATABASE = os.path.join(os.path.dirname(__file__), "game.db")
+# Carrega as variáveis do .env
+load_dotenv()
 
-def get_connection():
-    """Retorna uma conexão com o banco de dados."""
-    return sqlite3.connect(DATABASE)
+# Obtém os dados de conexão do MongoDB do .env
+MONGO_URI = os.getenv("MONGO_URI")
+DB_NAME = os.getenv("DB_NAME")
+COLLECTION_NAME = os.getenv("COLLECTION_NAME")
 
-def create_tables():
-    """Cria a tabela de itens no banco de dados, caso não exista."""
-    conn = get_connection()
-    cur = conn.cursor()
-    cur.execute("""
-        CREATE TABLE IF NOT EXISTS items (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT NOT NULL,
-            description TEXT,
-            rarity TEXT,
-            value INTEGER
-        )
-    """)
-    conn.commit()
-    conn.close()
+# Conectar ao MongoDB
+client = MongoClient(MONGO_URI, serverSelectionTimeoutMS=5000)  # Timeout de 5 segundos
+db = client[DB_NAME]
+items_collection = db[COLLECTION_NAME]
 
-def insert_item(name, description, rarity, value):
-    """Insere um item no banco de dados."""
-    conn = get_connection()
-    cur = conn.cursor()
-    cur.execute("""
-        INSERT INTO items (name, description, rarity, value)
-        VALUES (?, ?, ?, ?)
-    """, (name, description, rarity, value))
-    conn.commit()
-    conn.close()
+# Testar conexão antes de executar qualquer operação
+try:
+    client.server_info()  # Teste de conexão
+    print("✅ Conectado ao MongoDB!")
+except Exception as e:
+    print(f"❌ Erro ao conectar ao MongoDB: {e}")
+    exit()
 
-def get_all_items():
-    """Retorna todos os itens cadastrados no banco de dados."""
-    conn = get_connection()
-    cur = conn.cursor()
-    cur.execute("SELECT id, name, description, rarity, value FROM items")
-    items = cur.fetchall()
-    conn.close()
-    return items
+def create_sample_items():
+    """Adiciona itens ao banco de dados se a coleção estiver vazia."""
+    if items_collection.count_documents({}) == 0:
+        items_collection.insert_many([
+            {"name": "Health Potion", "description": "Restaura 50 HP", "rarity": "Common", "value": 10},
+            {"name": "Mana Potion", "description": "Restaura 30 MP", "rarity": "Common", "value": 12},
+            {"name": "Gold Coin", "description": "Uma moeda valiosa", "rarity": "Uncommon", "value": 50},
+        ])
+        print("🆕 Itens padrão adicionados ao banco de dados!")
+
+create_sample_items()

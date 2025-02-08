@@ -3,7 +3,7 @@ import random
 from enemy import Enemy
 from item import Item
 from npcs import spawn_npc
-from settings import WIDTH, HEIGHT, NPC_INTERACTION_DISTANCE
+from settings import WIDTH, HEIGHT, MAP_WIDTH, MAP_HEIGHT, NPC_INTERACTION_DISTANCE
 
 class Level:
     def __init__(self, player, all_sprites, enemies_group, items_group, npc_group):
@@ -78,7 +78,7 @@ class Level:
 
         self.all_sprites.add(enemy)
         self.enemies_group.add(enemy)
-        print(f"👿 Novo inimigo spawnado! Vida: {enemy.health}, XP: {enemy.xp_reward}")
+        print(f"👿 Novo inimigo spawnado! Vida: {enemy.health}, XP: {enemy.xp_reward}, Posição: {pos}")
 
     def spawn_item(self):
         """Gera um item aleatório no mapa."""
@@ -149,10 +149,9 @@ class Level:
 
             self.pending_enemies = []
 
-            # A retomada do combate ou do próximo round fica a critério de outra lógica/evento.
-            # Se desejar iniciar automaticamente um novo round (caso não haja inimigos), descomente:
-            # if len(self.enemies_group) == 0:
-            #     self.next_round()
+            # Se não houver inimigos, inicia o próximo round automaticamente
+            if len(self.enemies_group) == 0:
+                self.next_round()
 
     def next_round(self):
         """Inicia um novo round (caso não esteja ocorrendo interação com o NPC)."""
@@ -168,7 +167,7 @@ class Level:
         pygame.time.delay(1000)
 
         # Se o jogador ainda não atingiu o nível 5 ou o evento de NPC já ocorreu, prossegue com a criação de inimigos
-        self.spawn_npc()  # Caso a condição para NPC seja satisfeita, esse método não fará nada se já foi acionado.
+        self.spawn_npc()  
         if not self.npc_active:
             for _ in range(self.enemy_spawn_rate):
                 self.spawn_enemy()
@@ -176,8 +175,8 @@ class Level:
         self.round_active = True
 
     def get_random_spawn_position(self):
-        """Gera uma posição aleatória no mapa sem sobrepor o jogador."""
+        """Gera uma posição aleatória dentro dos limites do mapa sem sobrepor o jogador."""
         while True:
-            pos = (random.randint(50, WIDTH - 50), random.randint(50, HEIGHT - 50))
-            if abs(pos[0] - self.player.rect.x) > 100 and abs(pos[1] - self.player.rect.y) > 100:
+            pos = (random.randint(100, MAP_WIDTH - 100), random.randint(100, MAP_HEIGHT - 100))
+            if abs(pos[0] - self.player.rect.x) > 200 and abs(pos[1] - self.player.rect.y) > 200:
                 return pos

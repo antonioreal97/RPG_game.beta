@@ -7,15 +7,20 @@ class Item(pygame.sprite.Sprite):
     def __init__(self, pos, name, temporary=False, special=False):
         super().__init__()
         self.name = name
-        self.temporary = temporary  # Define se o item é temporário (multiplicador de dano)
+        self.temporary = temporary  # Define se o item tem efeito temporário (ex: multiplicador de dano)
         self.special = special  # Define se o item é uma Poção de Vida Especial
 
         # Define o caminho correto da imagem do item
         current_path = os.path.dirname(__file__)
-        if self.name == "Super Health Potion":
-            assets_path = os.path.join(current_path, "assets", "vida.png")
-        else:
-            assets_path = os.path.join(current_path, "assets", "item.png")
+        item_images = {
+            "Health Potion": "vida.png",
+            "Mana Potion": "item.png",
+            "Gold Coin": "gold_coin.png",
+            "Super Health Potion": "super_health_potion.png",
+        }
+
+        # Seleciona a imagem do item com base no nome
+        assets_path = os.path.join(current_path, "assets", item_images.get(self.name, "item.png"))
 
         # Verifica se a imagem existe antes de carregar
         if os.path.exists(assets_path):
@@ -66,12 +71,12 @@ class Item(pygame.sprite.Sprite):
 
     def activate_super_health(self, player):
         """Triplica a vida do jogador por 30 segundos."""
-        print("💖 Poção de Vida Especial ativada! HP x3 por 30 segundos!")
-        player.max_health *= 3
-        player.health = player.max_health
-        player.super_health_active = True
-        player.super_health_end_time = time.time() + 30  # Define a duração do efeito
+        if not player.super_health_active:  # Impede que o efeito seja ativado várias vezes ao mesmo tempo
+            print("💖 Poção de Vida Especial ativada! HP x3 por 30 segundos!")
+            player.max_health *= 3
+            player.health = player.max_health
+            player.super_health_active = True
+            player.super_health_end_time = time.time() + 30  # Define a duração do efeito
 
-        # Define um evento para reverter o efeito após 30 segundos
-        pygame.time.set_timer(pygame.USEREVENT + 1, 30000)  # Dispara um evento após 30s
-
+            # Define um evento para reverter o efeito após 30 segundos
+            pygame.time.set_timer(pygame.USEREVENT + 1, 30000)  # Dispara um evento após 30s

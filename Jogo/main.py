@@ -5,7 +5,8 @@ from settings import *
 from player import Player
 from level import Level
 import inventory_db
-from menu import menu, save_record  # Importando o menu e a função para salvar recordes
+from menu import menu, save_record  # Importa o menu e a função para salvar recordes
+from camera import Camera          # Importa a classe Camera
 
 def draw_hud(screen, player, font, level):
     """Desenha a interface do jogador (HP, Mana, XP, Nível, Round e Inventário)."""
@@ -36,8 +37,8 @@ def play_music():
     if os.path.exists(music_path):
         pygame.mixer.init()
         pygame.mixer.music.load(music_path)
-        pygame.mixer.music.set_volume(0.1)  # Ajusta o volume (0.0 a 1.0)
-        pygame.mixer.music.play(-1)  # Reproduz em loop infinito
+        pygame.mixer.music.set_volume(MUSIC_VOLUME)
+        pygame.mixer.music.play(-1)
     else:
         print("⚠️ Arquivo intro.mp3 não encontrado. Música não será reproduzida.")
 
@@ -62,11 +63,11 @@ def get_player_name(screen, font):
                 sys.exit()
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_RETURN:
-                    return name.strip()  # Retorna o nome sem espaços extras
+                    return name.strip()
                 elif event.key == pygame.K_BACKSPACE:
-                    name = name[:-1]  # Apaga um caractere
+                    name = name[:-1]
                 else:
-                    name += event.unicode  # Adiciona o caractere pressionado ao nome
+                    name += event.unicode
 
     return None
 
@@ -83,32 +84,36 @@ def main():
     clock = pygame.time.Clock()
     font = pygame.font.SysFont("arial", 24)
 
-    # Inicializa o banco de dados
-    inventory_db.create_tables()
+    inventory_db.create_sample_items()  # Garante que os itens sejam inseridos no MongoDB
 
-    # Carrega os backgrounds para alternar entre arenas
-    backgrounds = [
-        pygame.image.load(os.path.join(os.path.dirname(__file__), "assets", "background.png")).convert(),
-        pygame.image.load(os.path.join(os.path.dirname(__file__), "assets", "background1.png")).convert()
-    ]
-    current_arena = 0  # Começa na primeira arena
 
-    # Inicia a música apenas se ainda não estiver tocando
+    # Carrega o background do mapa grande
+    background_path = os.path.join(os.path.dirname(__file__), "assets", "large_background.png")
+    if os.path.exists(background_path):
+        background = pygame.image.load(background_path).convert()
+        background = pygame.transform.scale(background, (MAP_WIDTH, MAP_HEIGHT))
+    else:
+        background = pygame.Surface((MAP_WIDTH, MAP_HEIGHT))
+        background.fill(GRAY)
+
+    # Inicializa a câmera
+    camera = Camera(MAP_WIDTH, MAP_HEIGHT)
+
     if not pygame.mixer.get_init() or not pygame.mixer.music.get_busy():
         play_music()
 
     while True:
-        # Grupos de sprites
+        # Cria os grupos de sprites
         all_sprites = pygame.sprite.Group()
         enemies_group = pygame.sprite.Group()
         items_group = pygame.sprite.Group()
-        npc_group = pygame.sprite.Group()  # Grupo para NPCs
+        npc_group = pygame.sprite.Group()
 
-        # Criação do jogador
-        player = Player((WIDTH // 2, HEIGHT // 2))
+        # Cria o jogador (posicionado no centro do mapa)
+        player = Player((MAP_WIDTH // 2, MAP_HEIGHT // 2))
         all_sprites.add(player)
 
-        # Criação do nível (controle de inimigos, itens e NPCs)
+        # Cria o nível (controle de inimigos, itens e NPCs)
         level = Level(player, all_sprites, enemies_group, items_group, npc_group)
 
         running = True
@@ -125,9 +130,9 @@ def main():
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_SPACE:
                         player.attack(enemies_group)
-                    elif event.key == pygame.K_f:  # Ataque especial
+                    elif event.key == pygame.K_f:
                         player.special_attack(enemies_group)
-                    elif event.key == pygame.K_x:  # Interação com NPCs
+                    elif event.key == pygame.K_x:
                         level.handle_npc_interaction(keys)
                     elif event.key == pygame.K_i:
                         player.inventory.list_inventory()
@@ -135,17 +140,21 @@ def main():
                         player.use_item("Health Potion")
                     elif event.key == pygame.K_m:
                         player.use_item("Mana Potion")
-                    elif event.key == pygame.K_r:  # Reinicia o jogo ao morrer
+                    elif event.key == pygame.K_r:
                         print("🔄 Retornando ao menu...")
-                        return main()  # Retorna ao menu inicial
-
+                        return main()
                 elif event.type == pygame.USEREVENT:
                     if event.dict.get("action") == "restart":
                         print("🔄 Reiniciando jogo...")
-                        return main()  # Retorna ao menu inicial
-                    elif event.dict.get("action") == "change_arena":
-                        current_arena = event.dict.get("arena", 0)
-                        print(f"🌍 Arena alterada para {current_arena}")
+                        return main()
+                elif event.type == pygame.MOUSEBUTTONDOWN:
+                    # Ajusta o zoom com o scroll do mouse:
+                    # event.button == 4 -> scroll up (aumenta zoom)
+                    # event.button == 5 -> scroll down (diminui zoom)
+                    if event.button == 4:
+                        camera.zoom_factor = min(2.0, camera.zoom_factor + 0.1)
+                    elif event.button == 5:
+                        camera.zoom_factor = max(0.5, camera.zoom_factor - 0.1)
 
             # Atualiza apenas se o NPC não estiver interagindo
             if not level.npc_active:
@@ -154,12 +163,12 @@ def main():
                 items_group.update()
                 level.update()
 
-            npc_group.update()  # Atualiza os NPCs
+            npc_group.update()
 
             # Verifica se o jogador morreu
             if player.health <= 0:
                 player_name = get_player_name(screen, font)
-                if player_name:  # Só salva o recorde se o jogador digitou um nome
+                if player_name:
                     save_record(player_name, level.round_number)
                 print("🔄 Voltando ao menu...")
                 return main()
@@ -167,21 +176,46 @@ def main():
             # Verifica se o jogador coletou algum item
             collected_items = pygame.sprite.spritecollide(player, items_group, True)
             for item in collected_items:
-                item.apply_effect(player)  # Aplica o efeito do item
+                item.apply_effect(player)
 
-            # Renderização
-            screen.blit(backgrounds[current_arena], (0, 0))
-            all_sprites.draw(screen)
-            items_group.draw(screen)
-            npc_group.draw(screen)  # Desenha os NPCs
+            # Atualiza a câmera para centralizar o jogador (offset calculado sem zoom)
+            camera.update(player)
+
+            screen.fill(BLACK)
+
+            # Aplica o zoom ao background e extrai a parte visível
+            zoomed_background = camera.apply_zoom_to_background(background)
+            screen.blit(zoomed_background, (0, 0))
+
+            # Desenha os sprites com o zoom aplicado
+            for sprite in all_sprites:
+                zoomed_rect = camera.apply(sprite)
+                zoomed_sprite = pygame.transform.scale(sprite.image, (zoomed_rect.width, zoomed_rect.height))
+                screen.blit(zoomed_sprite, zoomed_rect)
+            for sprite in items_group:
+                zoomed_rect = camera.apply(sprite)
+                zoomed_sprite = pygame.transform.scale(sprite.image, (zoomed_rect.width, zoomed_rect.height))
+                screen.blit(zoomed_sprite, zoomed_rect)
+            for sprite in npc_group:
+                zoomed_rect = camera.apply(sprite)
+                zoomed_sprite = pygame.transform.scale(sprite.image, (zoomed_rect.width, zoomed_rect.height))
+                screen.blit(zoomed_sprite, zoomed_rect)
 
             # Desenha a caixa de diálogo do NPC se ele estiver interagindo
             if level.current_npc and level.dialogue_active:
                 level.current_npc.draw_dialogue_box(screen, font)
 
-            # Desenha barras de vida dos inimigos
+            # Desenha as barras de vida dos inimigos usando a posição "zoomada"
             for enemy in enemies_group:
-                enemy.draw_health_bar(screen)
+                zoomed_rect = camera.apply(enemy)
+                bar_width = int(50 * camera.zoom_factor)
+                bar_height = int(5 * camera.zoom_factor)
+                fill = (enemy.health / enemy.max_health) * bar_width
+                outline_rect = pygame.Rect(zoomed_rect.centerx - bar_width // 2, zoomed_rect.top - int(10 * camera.zoom_factor), bar_width, bar_height)
+                fill_rect = pygame.Rect(zoomed_rect.centerx - bar_width // 2, zoomed_rect.top - int(10 * camera.zoom_factor), fill, bar_height)
+                pygame.draw.rect(screen, (255, 255, 255), outline_rect)
+                pygame.draw.rect(screen, (255, 0, 0), fill_rect)
+                pygame.draw.rect(screen, (0, 0, 0), outline_rect, 1)
 
             draw_hud(screen, player, font, level)
             pygame.display.flip()

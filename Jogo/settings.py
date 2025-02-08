@@ -5,6 +5,14 @@ WIDTH = 1024
 HEIGHT = 768
 FPS = 60  # Frames por segundo
 
+# 🌍 Configurações do Mapa
+# Essas dimensões correspondem ao arquivo large_background.png (1920x1080)
+MAP_WIDTH = 1920
+MAP_HEIGHT = 1080
+
+# 🔍 Configuração do Zoom
+ZOOM_FACTOR = 1.0  # 1.0 = Sem zoom, >1.0 = Zoom In, <1.0 = Zoom Out
+
 # 🎨 Cores
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
@@ -42,7 +50,7 @@ ENEMY_FREEZE_DURATION = 1500  # Inimigo fica congelado por 1.5 segundos ao tomar
 # 🔥 Configurações do Round
 ROUND_ENEMY_INCREMENT = 1  # A cada round, aumenta a quantidade de inimigos
 ROUND_NPC_INTERVAL = 3  # NPCs aparecem a cada 3 rounds
-ROUND_DELAY = 1000  # Tempo de espera antes de iniciar um novo round (ms)
+ROUND_DELAY = 3000  # Tempo de espera antes de iniciar um novo round (ms)
 
 # 🎁 Configurações de Itens
 ITEM_DROP_RATE = 6  # Um item cai a cada 6 inimigos mortos
@@ -61,4 +69,4 @@ SFX_VOLUME = 0.2  # Volume dos efeitos sonoros (ataque, dano, etc.)
 
 # 🏆 Configurações do Jogo
 FONT_NAME = 'arial'
-GAME_OVER_DELAY = 2000  # Delay antes de voltar ao menu após Game Over (ms)
+GAME_OVER_DELAY = 5000  # Delay antes de voltar ao menu após Game Over (ms)
