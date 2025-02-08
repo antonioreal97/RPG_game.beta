@@ -12,7 +12,7 @@ def draw_hud(screen, player, font, level):
     health_text = font.render(f'HP: {player.health}/{player.max_health}', True, WHITE)
     mana_text = font.render(f'Mana: {player.mana}/{player.max_mana}', True, WHITE)
     xp_text = font.render(f'XP: {player.xp}/{player.xp_to_next_level}', True, WHITE)
-    level_text = font.render(f'Level: {player.level}', True, WHITE)
+    level_text = font.render(f'Level: {player.level}', True, RED)
     round_text = font.render(f'Round: {level.round_number}', True, WHITE)
 
     screen.blit(health_text, (10, 10))
@@ -102,13 +102,14 @@ def main():
         all_sprites = pygame.sprite.Group()
         enemies_group = pygame.sprite.Group()
         items_group = pygame.sprite.Group()
+        npc_group = pygame.sprite.Group()  # Adicionando grupo de NPCs
 
         # Criação do jogador
         player = Player((WIDTH // 2, HEIGHT // 2))
         all_sprites.add(player)
 
-        # Criação do nível (controle de inimigos e itens)
-        level = Level(player, all_sprites, enemies_group, items_group)
+        # Criação do nível (controle de inimigos, itens e NPCs)
+        level = Level(player, all_sprites, enemies_group, items_group, npc_group)
 
         running = True
         while running:
@@ -125,6 +126,8 @@ def main():
                         player.attack(enemies_group)
                     elif event.key == pygame.K_f:  # Ataque especial
                         player.special_attack(enemies_group)
+                    elif event.key == pygame.K_x:  # Interação com NPCs
+                        level.handle_npc_interaction(keys)  # 🔥 Corrigido para passar 'keys'
                     elif event.key == pygame.K_i:
                         player.inventory.list_inventory()
                     elif event.key == pygame.K_h:
@@ -142,10 +145,14 @@ def main():
                         current_arena = event.dict.get("arena", 0)
                         print(f"🌍 Arena alterada para {current_arena}")
 
-            player.update(keys)
-            enemies_group.update(player)
-            items_group.update()  # 🔥 Atualiza os itens corretamente
-            level.update()
+            # Atualiza apenas se o NPC não estiver interagindo
+            if not level.npc_active:
+                player.update(keys)
+                enemies_group.update(player)
+                items_group.update()
+                level.update()
+
+            npc_group.update()  # Atualiza NPCs
 
             # Verifica se o jogador morreu
             if player.health <= 0:
@@ -163,7 +170,12 @@ def main():
             # Renderização
             screen.blit(backgrounds[current_arena], (0, 0))
             all_sprites.draw(screen)
-            items_group.draw(screen)  # 🔥 Garante que os itens aparecem no mapa
+            items_group.draw(screen)
+            npc_group.draw(screen)  # Desenha os NPCs
+
+            # Desenha a caixa de diálogo do NPC se ele estiver interagindo
+            if level.current_npc and level.dialogue_active:
+                level.current_npc.draw_dialogue_box(screen, font)
 
             # Desenha barras de vida dos inimigos
             for enemy in enemies_group:

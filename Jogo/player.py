@@ -108,7 +108,7 @@ class Player(pygame.sprite.Sprite):
                     enemy.take_damage(damage)
                     if enemy.health <= 0:
                         self.gain_xp(enemy.xp_reward)
-                        self.restore_health(25)  # 🔥 Reduzimos o HP restaurado ao derrotar inimigos
+                        self.restore_health(25)  
                         print(f"⚔️ Inimigo derrotado! +25 HP. HP atual: {self.health}/{self.max_health}")
 
             self.last_attack = current_time

@@ -21,7 +21,7 @@ class Enemy(pygame.sprite.Sprite):
 
         # Ajustes de força do inimigo a cada 2 rounds
         strength_multiplier = 1.5 if round_number % 2 == 0 else 1
-        damage_multiplier = 1 if round_number % 2 == 0 else 1
+        damage_multiplier = 0.75 if round_number % 2 == 0 else 1
 
         # Atributos do inimigo ajustados para cada tipo
         if self.type == "Normal":
@@ -29,16 +29,19 @@ class Enemy(pygame.sprite.Sprite):
             self.health = self.max_health = (ENEMY_HEALTH + (round_number * 10)) * strength_multiplier
             self.attack_damage = (10 + (round_number * 2)) * damage_multiplier
             scale_factor = 1.0  # Tamanho normal
+            self.can_be_frozen = True  # Pode ser congelado
         elif self.type == "Rápido":
             self.speed = ENEMY_SPEED + (round_number * 0.3)  # Mais rápido
             self.health = self.max_health = (ENEMY_HEALTH + (round_number * 5)) * strength_multiplier
             self.attack_damage = (8 + (round_number * 2)) * damage_multiplier
             scale_factor = 1.2  # Levemente maior
+            self.can_be_frozen = True  # Pode ser congelado
         elif self.type == "Tanque":
             self.speed = ENEMY_SPEED + (round_number * 0.05)  # Muito lento
             self.health = self.max_health = (ENEMY_HEALTH + (round_number * 20)) * strength_multiplier
             self.attack_damage = (15 + (round_number * 2.5)) * damage_multiplier
             scale_factor = 1.5  # Muito maior
+            self.can_be_frozen = False  # 🔥 O inimigo Tanque NÃO pode ser congelado!
 
         # Carrega a imagem correspondente ao tipo de inimigo
         enemy_image_path = enemy_images[self.type]
@@ -116,15 +119,18 @@ class Enemy(pygame.sprite.Sprite):
         self.health -= amount
         if self.health <= 0:
             print(f"☠️ {self.type} eliminado!")
-            self.drop_item()  # Faz o inimigo dropar um item ao morrer
+            self.drop_item()  
             self.kill()
         else:
-            self.freeze_enemy()  # Congela o inimigo por 1.5 segundos
+            self.freeze_enemy()  
 
     def freeze_enemy(self):
-        """Congela o inimigo por 1.5 segundos ao receber dano."""
-        self.frozen_until = pygame.time.get_ticks() + 1500
-        print(f"❄️ {self.type} ficou congelado por 1.5 segundos!")
+        """Congela o inimigo por 1.5 segundos se ele puder ser congelado."""
+        if self.can_be_frozen:  
+            self.frozen_until = pygame.time.get_ticks() + 1500
+            print(f"❄️ {self.type} ficou congelado por 1.5 segundos!")
+        else:
+            print(f"🔥 {self.type} é resistente e não pode ser congelado!")
 
     def drop_item(self):
         """Faz o inimigo dropar um item ao morrer."""
@@ -152,10 +158,10 @@ class Enemy(pygame.sprite.Sprite):
         if self.visible:
             bar_width = 50
             bar_height = 5
-            fill = (self.health / self.max_health) * bar_width  # Calcula o tamanho da barra verde
+            fill = (self.health / self.max_health) * bar_width  
             outline_rect = pygame.Rect(self.rect.centerx - bar_width // 2, self.rect.top - 10, bar_width, bar_height)
             fill_rect = pygame.Rect(self.rect.centerx - bar_width // 2, self.rect.top - 10, fill, bar_height)
 
-            pygame.draw.rect(screen, (255, 255, 255), outline_rect)  # Barra branca (fundo)
-            pygame.draw.rect(screen, (255, 0, 0), fill_rect)  # Barra vermelha (vida atual)
-            pygame.draw.rect(screen, (0, 0, 0), outline_rect, 1)  # Contorno preto
+            pygame.draw.rect(screen, (255, 255, 255), outline_rect)  
+            pygame.draw.rect(screen, (255, 0, 0), fill_rect)  
+            pygame.draw.rect(screen, (0, 0, 0), outline_rect, 1)  
