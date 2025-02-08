@@ -28,13 +28,13 @@ ENEMY_ATTACK_COOLDOWN = 1000  # milissegundos
 ENEMY_DROP_CHANCE = 0.3  # 30% de chance de dropar um item ao morrer
 
 # Configurações de itens
-ITEM_DROP_RATE = 6  # Um item cai a cada 6 inimigos mortos
-SUPER_HEALTH_DROP_CHANCE = 0.5  # 50% de chance de dropar a Super Health Potion
+ITEM_DROP_RATE = 5  # Um item cai a cada 6 inimigos mortos
+SUPER_HEALTH_DROP_CHANCE = 0.3  # 50% de chance de dropar a Super Health Potion
 
 # Fonte do jogo
 FONT_NAME = 'arial'
 
 # Música e Som
-MUSIC_VOLUME = 0.1  # Volume da música (0.0 a 1.0)
+MUSIC_VOLUME = 0.01  # Volume da música (0.0 a 1.0)
 SFX_VOLUME = 0.2  # Volume dos efeitos sonoros (ataque, dano, etc.)
 

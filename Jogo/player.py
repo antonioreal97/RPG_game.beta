@@ -8,14 +8,19 @@ from inventory import Inventory
 class Player(pygame.sprite.Sprite):
     def __init__(self, pos):
         super().__init__()
-        
-        # Obtém caminho absoluto correto da imagem
-        current_path = os.path.dirname(__file__)
-        assets_path = os.path.join(current_path, "assets", "player.png")
 
-        # Carrega a imagem e ajusta o tamanho
-        original_image = pygame.image.load(assets_path).convert_alpha()
-        self.image = pygame.transform.scale(original_image, (128, 128))
+        # Caminho dos assets
+        self.current_path = os.path.dirname(__file__)
+        self.image_paths = {
+            "normal": os.path.join(self.current_path, "assets", "player.png"),
+            "special1": os.path.join(self.current_path, "assets", "player1.png"),
+            "special2": os.path.join(self.current_path, "assets", "player2.png"),
+        }
+
+        # Carrega a imagem normal
+        self.image = pygame.transform.scale(
+            pygame.image.load(self.image_paths["normal"]).convert_alpha(), (150, 150)
+        )
         self.rect = self.image.get_rect(center=pos)
 
         # Atributos do jogador
@@ -45,6 +50,10 @@ class Player(pygame.sprite.Sprite):
         self.level = 1
         self.xp_to_next_level = 100
 
+        # Controle de troca de imagem
+        self.special_item_time = 0  # Última vez que pegou um item especial
+        self.image_change_end_time = 0  # Quando a imagem deve voltar ao normal
+
     def update(self, keys):
         """Atualiza a movimentação do jogador e verifica efeitos ativos."""
         dx, dy = 0, 0
@@ -58,20 +67,49 @@ class Player(pygame.sprite.Sprite):
 
         # Verifica se os buffs expiraram
         self.check_buffs()
+        self.check_image_reset()
+
+    def collect_special_item(self):
+        """Altera a imagem do jogador ao pegar um item especial."""
+        current_time = time.time()
+
+        if current_time - self.special_item_time < 10:  # Pegou outro item especial em menos de 10s
+            self.image = pygame.transform.scale(
+                pygame.image.load(self.image_paths["special2"]).convert_alpha(), (180, 180)
+            )
+            print("🔵 O jogador pegou outro item especial rapidamente! Mudou para player2.png")
+        else:
+            self.image = pygame.transform.scale(
+                pygame.image.load(self.image_paths["special1"]).convert_alpha(), (200, 200)
+            )
+            print("🟢 O jogador pegou um item especial! Mudou para player1.png")
+
+        # Atualiza os tempos de troca de imagem
+        self.special_item_time = current_time
+        self.image_change_end_time = current_time + 10  # Voltar ao normal após 10s
+
+    def check_image_reset(self):
+        """Verifica se a imagem do jogador deve voltar ao normal."""
+        if time.time() >= self.image_change_end_time and self.image_change_end_time != 0:
+            self.image = pygame.transform.scale(
+                pygame.image.load(self.image_paths["normal"]).convert_alpha(), (150, 150)
+            )
+            self.image_change_end_time = 0
+            print("🔄 O tempo do efeito especial acabou. Voltando para a imagem normal.")
 
     def attack(self, enemies_group):
         """Realiza ataque normal."""
         current_time = pygame.time.get_ticks()
         if current_time - self.last_attack >= self.attack_cooldown:
             damage = (self.base_damage + (self.level * 2)) * self.damage_multiplier
-            
+
             for enemy in enemies_group.copy():
                 if self.rect.colliderect(enemy.rect):
                     enemy.take_damage(damage)
                     if enemy.health <= 0:
                         self.gain_xp(enemy.xp_reward)
-                        self.restore_health(50)
-                        print(f"⚔️ Inimigo derrotado! +50 HP. HP atual: {self.health}/{self.max_health}")
+                        self.restore_health(25)  # 🔥 Reduzimos o HP restaurado ao derrotar inimigos
+                        print(f"⚔️ Inimigo derrotado! +25 HP. HP atual: {self.health}/{self.max_health}")
 
             self.last_attack = current_time
 
@@ -118,13 +156,14 @@ class Player(pygame.sprite.Sprite):
             self.level_up()
 
     def level_up(self):
-        """Aumenta o nível e melhora os atributos."""
+        """Aumenta o nível e melhora os atributos (com progressão mais difícil)."""
         self.level += 1
         self.xp = 0
         self.xp_to_next_level = int(self.xp_to_next_level * 1.5)
 
-        self.health = min(self.health + 30, self.max_health)
-        self.mana = min(self.mana + 30, self.max_mana)
+        # 🔥 Agora ganha apenas +15 HP por nível
+        self.health = min(self.health + 15, self.max_health)
+        self.mana = min(self.mana + 20, self.max_mana)
 
         print(f"🔥 Level UP! Novo nível: {self.level}")
         print(f"❤️ HP restaurado para {self.health}/{self.max_health}")
@@ -132,7 +171,7 @@ class Player(pygame.sprite.Sprite):
 
     def activate_damage_multiplier(self):
         """Ativa o multiplicador de dano por 10 segundos."""
-        self.damage_multiplier = 2
+        self.damage_multiplier = 0.5
         self.multiplier_active = True
         self.multiplier_end_time = time.time() + 10
         print("🔥 Dano x2 ativado por 10 segundos!")
@@ -162,7 +201,7 @@ class Player(pygame.sprite.Sprite):
     def game_over(self):
         """Exibe a tela de Game Over."""
         print("💀 GAME OVER! Você foi derrotado.")
-        
+
         screen = pygame.display.set_mode((WIDTH, HEIGHT))
         gameover_path = os.path.join(os.path.dirname(__file__), "assets", "gameover.png")
         gameover_image = pygame.image.load(gameover_path).convert()
@@ -170,7 +209,7 @@ class Player(pygame.sprite.Sprite):
         running = True
         while running:
             screen.blit(gameover_image, (0, 0))
-            font = pygame.font.SysFont(FONT_NAME, 36)
+            font = pygame.font.SysFont("arial", 36)
             text = font.render("Pressione R para Reiniciar ou ESC para Sair", True, WHITE)
             screen.blit(text, (WIDTH // 2 - 200, HEIGHT - 100))
             pygame.display.flip()

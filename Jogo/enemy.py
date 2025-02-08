@@ -17,25 +17,29 @@ class Enemy(pygame.sprite.Sprite):
         # Determina tipo de inimigo
         self.type = self.choose_enemy_type(round_number)
 
+        # Ajustes de força do inimigo a cada 2 rounds
+        strength_multiplier = 1.5 if round_number % 2 == 0 else 1
+        damage_multiplier = 1.5 if round_number % 2 == 0 else 1
+
         # Atributos do inimigo ajustados para cada tipo
         if self.type == "Normal":
-            self.speed = ENEMY_SPEED + (round_number * 0.01)
-            self.health = self.max_health = ENEMY_HEALTH + (round_number * 10)
-            self.attack_damage = 10 + (round_number * 2)
+            self.speed = ENEMY_SPEED + (round_number * 0.2)
+            self.health = self.max_health = (ENEMY_HEALTH + (round_number * 10)) * strength_multiplier
+            self.attack_damage = (10 + (round_number * 2)) * damage_multiplier
             scale_factor = 1.0  # Tamanho normal
         elif self.type == "Rápido":
-            self.speed = ENEMY_SPEED + (round_number * 0.3)  # Mais rápido
-            self.health = self.max_health = ENEMY_HEALTH + (round_number * 5)  # Menos vida
-            self.attack_damage = 8 + (round_number * 2)  # Dano levemente menor
-            scale_factor = 1.1  # Levemente maior
+            self.speed = ENEMY_SPEED + (round_number * 0.1)  # Mais rápido
+            self.health = self.max_health = (ENEMY_HEALTH + (round_number * 5)) * strength_multiplier
+            self.attack_damage = (8 + (round_number * 2)) * damage_multiplier
+            scale_factor = 1.2  # Levemente maior
         elif self.type == "Tanque":
             self.speed = ENEMY_SPEED + (round_number * 0.05)  # Muito lento
-            self.health = self.max_health = ENEMY_HEALTH + (round_number * 20)  # Vida muito maior
-            self.attack_damage = 15 + (round_number * 2.5)  # Dano mais alto
+            self.health = self.max_health = (ENEMY_HEALTH + (round_number * 20)) * strength_multiplier
+            self.attack_damage = (15 + (round_number * 2.5)) * damage_multiplier
             scale_factor = 1.5  # Muito maior
 
         # Aumenta o tamanho do inimigo conforme o round
-        scale_factor += round_number * 0.05  # Cresce 5% por round
+        scale_factor += round_number * 0.02  # Cresce 2% por round
         new_size = (int(128 * scale_factor), int(128 * scale_factor))
         self.image = pygame.transform.scale(original_image, new_size)
         self.rect = self.image.get_rect(center=pos)
@@ -44,7 +48,7 @@ class Enemy(pygame.sprite.Sprite):
         self.last_attack_time = 0  # Guarda o último ataque realizado
 
         # Delay para o spawn
-        self.spawn_time = pygame.time.get_ticks() + 3000  # Adiciona 3 segundos ao tempo atual
+        self.spawn_time = pygame.time.get_ticks() + 2500  # Adiciona 2.5 segundos ao tempo atual
         self.visible = False  # Inicialmente, o inimigo está invisível
 
         # Grupos para spawn de itens
@@ -129,6 +133,6 @@ class Enemy(pygame.sprite.Sprite):
             outline_rect = pygame.Rect(self.rect.centerx - bar_width // 2, self.rect.top - 10, bar_width, bar_height)
             fill_rect = pygame.Rect(self.rect.centerx - bar_width // 2, self.rect.top - 10, fill, bar_height)
 
-            pygame.draw.rect(screen, (255, 255, 255), outline_rect)  # Barra vermelha (fundo)
-            pygame.draw.rect(screen, (255, 0, 0), fill_rect)  # Barra verde (vida atual)
+            pygame.draw.rect(screen, (255, 255, 255), outline_rect)  # Barra branca (fundo)
+            pygame.draw.rect(screen, (255, 0, 0), fill_rect)  # Barra vermelha (vida atual)
             pygame.draw.rect(screen, (0, 0, 0), outline_rect, 1)  # Contorno preto
