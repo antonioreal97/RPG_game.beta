@@ -5,7 +5,7 @@ from settings import *
 from player import Player
 from level import Level
 import inventory_db
-from menu import menu  # Importando o menu inicial
+from menu import menu, save_record  # Importando o menu e função para salvar recordes
 
 def draw_hud(screen, player, font, level):
     """Desenha a interface do jogador (HP, Mana, XP, Nível, Round e Inventário)."""
@@ -41,6 +41,35 @@ def play_music():
     else:
         print("⚠️ Arquivo intro.mp3 não encontrado. Música não será reproduzida.")
 
+def get_player_name(screen, font):
+    """Exibe uma caixa de entrada para o jogador inserir seu nome ao morrer."""
+    name = ""
+    input_active = True
+
+    while input_active:
+        screen.fill(BLACK)
+        prompt_text = font.render("Digite seu nome para salvar o recorde:", True, WHITE)
+        screen.blit(prompt_text, (WIDTH // 2 - 200, HEIGHT // 2 - 50))
+
+        name_text = font.render(name, True, WHITE)
+        screen.blit(name_text, (WIDTH // 2 - 100, HEIGHT // 2))
+
+        pygame.display.flip()
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_RETURN:
+                    return name.strip()  # Retorna o nome sem espaços extras
+                elif event.key == pygame.K_BACKSPACE:
+                    name = name[:-1]  # Apaga um caractere
+                else:
+                    name += event.unicode  # Adiciona a tecla pressionada ao nome
+
+    return None
+
 def main():
     """Loop principal do jogo"""
 
@@ -52,7 +81,7 @@ def main():
     screen = pygame.display.set_mode((WIDTH, HEIGHT))
     pygame.display.set_caption("RPG Game - Prototype")
     clock = pygame.time.Clock()
-    font = pygame.font.SysFont(FONT_NAME, 24)
+    font = pygame.font.SysFont("arial", 24)
 
     # Inicializa o banco de dados
     inventory_db.create_tables()
@@ -117,6 +146,14 @@ def main():
             enemies_group.update(player)
             items_group.update()  # 🔥 Atualiza os itens corretamente
             level.update()
+
+            # Verifica se o jogador morreu
+            if player.health <= 0:
+                player_name = get_player_name(screen, font)
+                if player_name:  # Só salva o recorde se o jogador digitou um nome
+                    save_record(player_name, level.round_number)
+                print("🔄 Voltando ao menu...")
+                return main()
 
             # Verifica se o jogador coletou algum item
             collected_items = pygame.sprite.spritecollide(player, items_group, True)

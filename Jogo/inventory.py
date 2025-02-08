@@ -1,3 +1,7 @@
+import pygame
+import os
+from settings import WIDTH, HEIGHT, FONT_NAME, WHITE, BLACK
+
 class Inventory:
     def __init__(self, capacity=10):
         """Inicializa o inventário com um limite de espaço."""
@@ -31,21 +35,63 @@ class Inventory:
         if item_name in self.items:
             item = self.items[item_name]["object"]
 
-            # Exemplo de efeito de uso de item
+            # Aplica os efeitos dos itens no jogador
             if item_name == "Health Potion":
-                player.health = min(player.health + 30, PLAYER_HEALTH)
+                player.restore_health(30)
                 print("❤️ Jogador usou uma Poção de Vida e recuperou 30 HP!")
-            
+
             elif item_name == "Mana Potion":
-                player.mana = min(player.mana + 20, PLAYER_MANA)
+                player.restore_mana(20)
                 print("🔵 Jogador usou uma Poção de Mana e recuperou 20 MP!")
+
+            elif item_name == "Super Health Potion":
+                player.activate_super_health()
+                print("💖 Jogador usou uma Poção de Vida Especial!")
 
             self.remove_item(item_name)  # Remove um item após o uso
         else:
             print(f"⚠ {item_name} não está disponível para uso.")
 
+    def open_inventory(self, screen, player):
+        """Pausa o jogo e exibe o inventário na tela."""
+        running = True
+        font = pygame.font.Font(FONT_NAME, 28)
+        clock = pygame.time.Clock()
+
+        while running:
+            screen.fill((30, 30, 30))  # Fundo do inventário
+            title = font.render("🎒 Inventário", True, WHITE)
+            screen.blit(title, (WIDTH // 2 - 80, 50))
+
+            y_offset = 120
+            for idx, (item_name, details) in enumerate(self.items.items()):
+                text = font.render(f"{idx + 1}. {item_name} (x{details['quantity']})", True, WHITE)
+                screen.blit(text, (WIDTH // 2 - 150, y_offset))
+                y_offset += 40
+
+            instructions = font.render("Pressione 1-9 para usar itens | Pressione I para sair", True, WHITE)
+            screen.blit(instructions, (WIDTH // 2 - 250, HEIGHT - 100))
+
+            pygame.display.flip()
+            clock.tick(30)
+
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    exit()
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_i:
+                        return  # Fecha o inventário e retorna ao jogo
+                    
+                    # Verifica se o jogador pressionou um número para usar um item
+                    if pygame.K_1 <= event.key <= pygame.K_9:
+                        item_index = event.key - pygame.K_1  # Converte a tecla para índice
+                        if item_index < len(self.items):
+                            item_name = list(self.items.keys())[item_index]
+                            self.use_item(item_name, player)
+
     def list_inventory(self):
-        """Exibe todos os itens do inventário."""
+        """Exibe todos os itens do inventário no console."""
         if not self.items:
             print("📦 Inventário vazio.")
         else:

@@ -129,6 +129,6 @@ class Enemy(pygame.sprite.Sprite):
             outline_rect = pygame.Rect(self.rect.centerx - bar_width // 2, self.rect.top - 10, bar_width, bar_height)
             fill_rect = pygame.Rect(self.rect.centerx - bar_width // 2, self.rect.top - 10, fill, bar_height)
 
-            pygame.draw.rect(screen, (255, 0, 0), outline_rect)  # Barra vermelha (fundo)
-            pygame.draw.rect(screen, (0, 255, 0), fill_rect)  # Barra verde (vida atual)
+            pygame.draw.rect(screen, (255, 255, 255), outline_rect)  # Barra vermelha (fundo)
+            pygame.draw.rect(screen, (255, 0, 0), fill_rect)  # Barra verde (vida atual)
             pygame.draw.rect(screen, (0, 0, 0), outline_rect, 1)  # Contorno preto
