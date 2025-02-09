@@ -2,7 +2,7 @@ import os
 import pygame
 import sys
 import time
-from settings import *
+from settings import *  # Certifique-se de que MAP_WIDTH e MAP_HEIGHT estão definidos em settings
 from inventory import Inventory
 
 class Player(pygame.sprite.Sprite):
@@ -66,9 +66,9 @@ class Player(pygame.sprite.Sprite):
         if keys[pygame.K_d]:
             dx = self.speed
 
-        # Atualiza a posição, garantindo que o jogador não saia da tela
-        self.rect.x = max(0, min(WIDTH - self.rect.width, self.rect.x + dx))
-        self.rect.y = max(0, min(HEIGHT - self.rect.height, self.rect.y + dy))
+        # Atualiza a posição, garantindo que o jogador não saia dos limites do MAPA
+        self.rect.x = max(0, min(MAP_WIDTH - self.rect.width, self.rect.x + dx))
+        self.rect.y = max(0, min(MAP_HEIGHT - self.rect.height, self.rect.y + dy))
 
         # Verifica se os buffs ou efeitos especiais expiraram
         self.check_buffs()
@@ -215,7 +215,7 @@ class Player(pygame.sprite.Sprite):
         while running:
             screen.blit(gameover_image, (0, 0))
             font = pygame.font.SysFont("arial", 36)
-            text = font.render("Pressione R para Reiniciar ou ESC para Sair", True, WHITE)
+            text = font.render("Pressione R para Reiniciar ou ESC para Sair", True, (255, 255, 255))
             screen.blit(text, (WIDTH // 2 - 200, HEIGHT - 100))
             pygame.display.flip()
 
