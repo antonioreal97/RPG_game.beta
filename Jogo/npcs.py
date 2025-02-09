@@ -7,24 +7,28 @@ class NPC(pygame.sprite.Sprite):
     def __init__(self, pos, name, image_path, dialogues):
         super().__init__()
 
-        # Carrega a imagem do NPC
-        original_image = pygame.image.load(image_path).convert_alpha()
+        # Tenta carregar a imagem do NPC; se não encontrar, usa uma imagem padrão
+        if os.path.exists(image_path):
+            original_image = pygame.image.load(image_path).convert_alpha()
+        else:
+            print(f"⚠️ Imagem '{image_path}' não encontrada para o NPC '{name}'. Usando imagem padrão.")
+            original_image = pygame.Surface((100, 100))
+            original_image.fill((150, 150, 150))
 
         # Ajuste dinâmico do tamanho para manter a proporção
         scale_height = 200  # Altura fixa para NPCs
         original_width, original_height = original_image.get_size()
-        scale_width = int((scale_height / original_height) * original_width)  # Mantém a proporção
-
+        scale_width = int((scale_height / original_height) * original_width)
         self.image = pygame.transform.scale(original_image, (scale_width, scale_height))
         self.rect = self.image.get_rect(center=pos)
 
         # Informações do NPC
         self.name = name
         self.dialogues = dialogues  # Lista de diálogos do NPC
-        self.current_dialogue = 0  # Índice do diálogo atual
-        self.interacting = False  # Inicia sem interação ativa
-        self.player_near = False  # Indica se o jogador está próximo
-        self.finished_interaction = False  # Indica se o NPC já concluiu o diálogo
+        self.current_dialogue = 0   # Índice do diálogo atual
+        self.interacting = False    # Indica se o NPC está em interação ativa
+        self.player_near = False    # Indica se o jogador está próximo
+        self.finished_interaction = False  # Indica se o diálogo já foi concluído
 
     def check_proximity(self, player):
         """Verifica se o jogador está próximo do NPC para permitir a interação."""
@@ -32,25 +36,31 @@ class NPC(pygame.sprite.Sprite):
         self.player_near = distance < NPC_INTERACTION_DISTANCE
 
     def interact(self):
-        """Inicia o diálogo com o NPC quando o jogador pressiona 'X'."""
+        """
+        Inicia o diálogo com o NPC quando o jogador pressiona 'X',
+        desde que o jogador esteja próximo e o diálogo ainda não tenha sido finalizado.
+        """
         if self.player_near and not self.finished_interaction:
             self.interacting = True
 
     def advance_dialogue(self):
-        """Avança para o próximo diálogo ao pressionar 'X'."""
+        """
+        Avança para o próximo diálogo ao pressionar 'X'.
+        Finaliza a interação quando não houver mais diálogos.
+        """
         if self.interacting:
             if self.current_dialogue < len(self.dialogues) - 1:
                 self.current_dialogue += 1
             else:
-                self.interacting = False  # Finaliza a interação quando os diálogos terminam
+                self.interacting = False
                 self.finished_interaction = True
 
     def draw_dialogue_box(self, screen, font):
-        """Desenha a caixa de diálogo quando o NPC está interagindo."""
+        """Desenha a caixa de diálogo na tela enquanto o NPC está interagindo."""
         if self.interacting:
             dialogue_text = self.dialogues[self.current_dialogue]
 
-            # Configura a caixa de diálogo
+            # Configuração da caixa de diálogo
             box_width, box_height = WIDTH - 100, 100
             box_x, box_y = 50, HEIGHT - 150
             pygame.draw.rect(screen, BLACK, (box_x, box_y, box_width, box_height))
@@ -68,7 +78,10 @@ class NPC(pygame.sprite.Sprite):
         """Exibe um prompt indicando que o jogador pode interagir com o NPC."""
         if self.player_near and not self.interacting and not self.finished_interaction:
             prompt_text = font.render("Pressione X para falar", True, WHITE)
-            screen.blit(prompt_text, (self.rect.centerx - 50, self.rect.top - 20))
+            # Posiciona o prompt centralizado horizontalmente acima do NPC
+            prompt_x = self.rect.centerx - prompt_text.get_width() // 2
+            prompt_y = self.rect.top - 30
+            screen.blit(prompt_text, (prompt_x, prompt_y))
 
     def end_interaction(self):
         """Finaliza a interação do NPC, permitindo a progressão do jogo."""
@@ -108,7 +121,6 @@ def spawn_npc():
         }
     ]
 
-    chosen_npc = random.choice(npc_list)  # Escolhe um NPC aleatoriamente
-    pos = (random.randint(200, WIDTH - 200), random.randint(200, HEIGHT - 200))  # Define uma posição aleatória no mapa
-
+    chosen_npc = random.choice(npc_list)
+    pos = (random.randint(200, WIDTH - 200), random.randint(200, HEIGHT - 200))
     return NPC(pos, chosen_npc["name"], chosen_npc["image"], chosen_npc["dialogues"])

@@ -21,9 +21,10 @@ class Level:
         self.npc_active = False
         self.current_npc = None
         self.dialogue_active = False
-        self.npc_spawned_for_level5 = False  # Garante que o NPC seja spawnado apenas uma vez quando o jogador atingir o nível 5
+        self.npc_spawned_for_level5 = False  # Garante que o NPC seja spawnado apenas uma vez ao atingir o nível 5
 
-        self.pending_enemies = []  # Armazena inimigos para spawn após interação
+        self.pending_enemies = []  # Armazena inimigos para spawn após interação com o NPC
+        self.last_item_spawn_kill_count = 0  # Controle para evitar múltiplos spawns de item para o mesmo limiar
         self.create_level()
 
     def create_level(self):
@@ -34,11 +35,14 @@ class Level:
 
     def update(self):
         """
-        Atualiza o nível, verifica a condição para spawn do NPC (ao atingir o nível 5),
-        gerencia as mortes dos inimigos e a progressão dos rounds.
+        Atualiza o nível, verificando:
+          - Se o NPC deve ser spawnado (ao atingir o nível 5);
+          - A remoção de inimigos mortos e o ganho de XP;
+          - O spawn de itens a cada 6 inimigos mortos;
+          - A progressão para o próximo round.
         """
         if self.dialogue_active:
-            return  # Se houver diálogo ativo, pausa as ações do nível
+            return  # Pausa as ações do nível enquanto o diálogo estiver ativo
 
         # Se o jogador atingiu o nível 5 e o NPC ainda não foi spawnado, gera o NPC para interação
         if self.player.level >= 5 and not self.npc_spawned_for_level5:
@@ -47,8 +51,8 @@ class Level:
 
         enemies_to_remove = []
 
-        # Verifica quais inimigos foram mortos
-        for enemy in self.enemies_group:
+        # Verifica quais inimigos foram mortos e acumula o XP para o jogador
+        for enemy in list(self.enemies_group):
             if enemy.health <= 0:
                 self.player.gain_xp(enemy.xp_reward)
                 self.enemies_killed += 1
@@ -57,11 +61,13 @@ class Level:
         # Remove os inimigos mortos
         for enemy in enemies_to_remove:
             enemy.kill()
-            self.enemies_group.remove(enemy)
+            if enemy in self.enemies_group:
+                self.enemies_group.remove(enemy)
 
-        # Gera um item a cada 6 inimigos mortos
-        if self.enemies_killed > 0 and self.enemies_killed % 6 == 0:
+        # Gera um item a cada 6 inimigos mortos (evitando múltiplos spawns para o mesmo limiar)
+        if self.enemies_killed - self.last_item_spawn_kill_count >= 6:
             self.spawn_item()
+            self.last_item_spawn_kill_count = self.enemies_killed
 
         # Se não houver inimigos ativos e não estiver ocorrendo interação com o NPC, inicia o próximo round
         if len(self.enemies_group) == 0 and self.round_active and not self.npc_active:
@@ -108,8 +114,9 @@ class Level:
             self.npc_spawned_for_level5 = True
             print(f"🧙 NPC '{npc.name}' apareceu no mapa!")
 
-            # Remove todos os inimigos temporariamente
-            for enemy in self.enemies_group:
+            # Armazena e remove temporariamente os inimigos ativos
+            self.pending_enemies = list(self.enemies_group)
+            for enemy in self.pending_enemies:
                 self.all_sprites.remove(enemy)
             self.enemies_group.empty()
 
@@ -130,8 +137,8 @@ class Level:
 
     def end_npc_interaction(self):
         """
-        Finaliza a interação com o NPC, removendo-o do mapa e permitindo que
-        os inimigos (ou o próximo round) sejam retomados.
+        Finaliza a interação com o NPC, removendo-o do mapa e liberando os inimigos pendentes
+        ou iniciando o próximo round, conforme o caso.
         """
         if self.current_npc:
             print(f"✅ Diálogo com {self.current_npc.name} concluído! Inimigos podem reaparecer.")
@@ -141,11 +148,11 @@ class Level:
             self.dialogue_active = False
             self.npc_active = False
 
-            # Libera os inimigos pendentes (se houver)
+            # Reintroduz os inimigos que foram removidos
             for enemy in self.pending_enemies:
                 self.all_sprites.add(enemy)
                 self.enemies_group.add(enemy)
-                print(f"👿 {enemy.type} apareceu após o NPC! Vida: {enemy.health}")
+                print(f"👿 {enemy.__class__.__name__} apareceu após o NPC! Vida: {enemy.health}")
 
             self.pending_enemies = []
 
@@ -166,8 +173,8 @@ class Level:
 
         pygame.time.delay(1000)
 
-        # Se o jogador ainda não atingiu o nível 5 ou o evento de NPC já ocorreu, prossegue com a criação de inimigos
-        self.spawn_npc()  
+        # Tenta spawnar o NPC (caso o evento ainda seja aplicável); caso contrário, spawnam inimigos normalmente
+        self.spawn_npc()
         if not self.npc_active:
             for _ in range(self.enemy_spawn_rate):
                 self.spawn_enemy()
@@ -177,6 +184,9 @@ class Level:
     def get_random_spawn_position(self):
         """Gera uma posição aleatória dentro dos limites do mapa sem sobrepor o jogador."""
         while True:
-            pos = (random.randint(100, MAP_WIDTH - 100), random.randint(100, MAP_HEIGHT - 100))
+            pos = (
+                random.randint(100, MAP_WIDTH - 100),
+                random.randint(100, MAP_HEIGHT - 100)
+            )
             if abs(pos[0] - self.player.rect.x) > 200 and abs(pos[1] - self.player.rect.y) > 200:
                 return pos
