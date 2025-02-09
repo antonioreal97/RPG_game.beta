@@ -72,7 +72,7 @@ ROUND_DELAY = 3000                 # Tempo de espera antes de iniciar um novo ro
 ITEM_DROP_RATE = 6               # Um item cai a cada 6 inimigos mortos
 SUPER_HEALTH_DROP_CHANCE = 0.3   # 30% de chance de dropar a Super Health Potion
 ITEM_EFFECT_DURATION = 10        # Duração de efeitos especiais (segundos)
-ITEM_TYPES = ["Health Potion", "Mana Potion", "Gold Coin"]
+ITEM_TYPES = ["Health Potion", "Mana Potion", "Gold Coin", "Super Health Potion"]
 
 # ----------------------
 # NPC Settings

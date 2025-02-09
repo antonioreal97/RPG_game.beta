@@ -1,6 +1,7 @@
 import pygame
 import random
 from enemy import Enemy
+from enemyboss import EnemyBoss  # Importa o boss
 from item import Item
 from npcs import spawn_npc
 from settings import WIDTH, HEIGHT, MAP_WIDTH, MAP_HEIGHT, NPC_INTERACTION_DISTANCE
@@ -17,7 +18,7 @@ class Level:
         self.enemy_spawn_rate = 3
         self.round_active = True
 
-        # Controle de NPC para evento de nível 5
+        # Controle de NPC para evento de nível 4
         self.npc_active = False
         self.current_npc = None
         self.dialogue_active = False
@@ -45,7 +46,7 @@ class Level:
             return  # Pausa as ações do nível enquanto o diálogo estiver ativo
 
         # Se o jogador atingiu o nível 5 e o NPC ainda não foi spawnado, gera o NPC para interação
-        if self.player.level >= 5 and not self.npc_spawned_for_level5:
+        if self.player.level >= 4 and not self.npc_spawned_for_level5:
             self.spawn_npc()
             return
 
@@ -102,10 +103,10 @@ class Level:
 
     def spawn_npc(self):
         """
-        Gera um NPC para interação quando o jogador atinge o nível 5,
+        Gera um NPC para interação quando o jogador atinge o nível 4,
         pausando os inimigos enquanto o diálogo não for concluído.
         """
-        if self.player.level >= 5 and not self.npc_spawned_for_level5:
+        if self.player.level >= 4 and not self.npc_spawned_for_level5:
             npc = spawn_npc()  # Função importada de npcs.py
             self.all_sprites.add(npc)
             self.npc_group.add(npc)
@@ -170,16 +171,27 @@ class Level:
         self.enemy_spawn_rate += 1
 
         print(f"🔥 Novo Round {self.round_number}! Agora teremos {self.enemy_spawn_rate} inimigos!")
-
         pygame.time.delay(1000)
 
-        # Tenta spawnar o NPC (caso o evento ainda seja aplicável); caso contrário, spawnam inimigos normalmente
+        # Tenta spawnar o NPC (caso o evento ainda seja aplicável)
         self.spawn_npc()
         if not self.npc_active:
+            # Se for um round de boss (a cada 10 rounds), spawna o boss
+            if self.round_number % 10 == 0:
+                self.spawn_boss()
+            # Spawn de inimigos regulares
             for _ in range(self.enemy_spawn_rate):
                 self.spawn_enemy()
 
         self.round_active = True
+
+    def spawn_boss(self):
+        """Gera o Enemy Boss no mapa."""
+        pos = self.get_random_spawn_position()
+        boss = EnemyBoss(pos, self.round_number, self.all_sprites, self.items_group)
+        self.all_sprites.add(boss)
+        self.enemies_group.add(boss)
+        print(f"👹 Boss spawnado no Round {self.round_number} na posição {pos}")
 
     def get_random_spawn_position(self):
         """Gera uma posição aleatória dentro dos limites do mapa sem sobrepor o jogador."""

@@ -5,8 +5,8 @@ from settings import *
 from player import Player
 from level import Level
 import inventory_db
-from menu import menu, save_record  # Importa o menu e a função para salvar recordes
-from camera import Camera          # Importa a classe Camera
+from menu import menu, save_record
+from camera import Camera
 
 def draw_hud(screen, player, font, level):
     """Desenha a interface do jogador (HP, Mana, XP, Nível, Round e Inventário)."""
@@ -30,6 +30,32 @@ def draw_hud(screen, player, font, level):
         item_text = font.render(f"- {item_name} (x{details['quantity']})", True, WHITE)
         screen.blit(item_text, (10, y_offset))
         y_offset += 30
+
+def draw_player_health_bar(screen, player):
+    """Desenha a barra de vida do jogador no canto superior direito da tela com cores dinâmicas."""
+    bar_width = 200
+    bar_height = 20
+    x = WIDTH - bar_width - 20  # Posiciona no canto superior direito
+    y = 20  # Distância do topo
+
+    # Calcula a largura da barra de vida proporcional à vida do jogador
+    health_ratio = player.health / player.max_health
+    fill_width = int(bar_width * health_ratio)
+
+    # Define a cor com base na porcentagem de vida
+    if health_ratio > 0.5:
+        health_color = (0, 0, 255)  # Azul (100% até 51%)
+    elif health_ratio > 0.3:
+        health_color = (128, 0, 128)  # Roxo (50% até 31%)
+    else:
+        health_color = (255, 0, 0)  # Vermelho (30% ou menos)
+
+    # Desenha o contorno e a barra de vida com a cor correspondente
+    outline_rect = pygame.Rect(x, y, bar_width, bar_height)
+    fill_rect = pygame.Rect(x, y, fill_width, bar_height)
+
+    pygame.draw.rect(screen, (255, 255, 255), outline_rect, 2)  # Contorno branco
+    pygame.draw.rect(screen, health_color, fill_rect)  # Barra de vida colorida
 
 def play_music():
     """Toca a música de fundo."""
@@ -76,7 +102,7 @@ def main():
 
     # Exibe o menu antes de iniciar
     if not menu():
-        return  # Sai do jogo se o usuário escolher sair
+        return  
 
     pygame.init()
     screen = pygame.display.set_mode((WIDTH, HEIGHT))
@@ -84,8 +110,7 @@ def main():
     clock = pygame.time.Clock()
     font = pygame.font.SysFont("arial", 24)
 
-    inventory_db.create_sample_items()  # Garante que os itens sejam inseridos no MongoDB
-
+    inventory_db.create_sample_items()  
 
     # Carrega o background do mapa grande
     background_path = os.path.join(os.path.dirname(__file__), "assets", "large_background.png")
@@ -126,7 +151,6 @@ def main():
                 if event.type == pygame.QUIT:
                     pygame.quit()
                     sys.exit()
-
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_SPACE:
                         player.attack(enemies_group)
@@ -218,6 +242,7 @@ def main():
                 pygame.draw.rect(screen, (0, 0, 0), outline_rect, 1)
 
             draw_hud(screen, player, font, level)
+            draw_player_health_bar(screen, player)  
             pygame.display.flip()
 
 if __name__ == "__main__":

@@ -64,7 +64,7 @@ class Item(pygame.sprite.Sprite):
         self.start_y = self.rect.y - 100  # Posição inicial (100 pixels acima)
         self.final_y = self.rect.y       # Posição final (no chão)
         self.rect.y = self.start_y       # Inicia acima do chão
-        self.drop_speed = 5              # Velocidade da queda
+        self.drop_speed = 3              # Velocidade da queda
         self.dropping = True             # Indica se o item ainda está caindo
 
     def update(self):
@@ -94,6 +94,7 @@ class Item(pygame.sprite.Sprite):
             print("💰 Você pegou uma moeda de ouro!")
         elif self.name == "Super Health Potion":
             self.activate_super_health(player)
+            print("❤️Vida Triplica (3x)!❤️")
 
         # Remove o item do grupo de sprites (ou seja, do jogo) após seu uso
         self.kill()
