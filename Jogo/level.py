@@ -18,7 +18,7 @@ class Level:
         self.enemy_spawn_rate = 3
         self.round_active = True
 
-        # Controle de NPC para evento de nível 4
+        # Controle de NPC para evento de nível 5
         self.npc_active = False
         self.current_npc = None
         self.dialogue_active = False
@@ -46,7 +46,7 @@ class Level:
             return  # Pausa as ações do nível enquanto o diálogo estiver ativo
 
         # Se o jogador atingiu o nível 5 e o NPC ainda não foi spawnado, gera o NPC para interação
-        if self.player.level >= 4 and not self.npc_spawned_for_level5:
+        if self.player.level >= 5 and not self.npc_spawned_for_level5:
             self.spawn_npc()
             return
 
@@ -103,10 +103,10 @@ class Level:
 
     def spawn_npc(self):
         """
-        Gera um NPC para interação quando o jogador atinge o nível 4,
+        Gera um NPC para interação quando o jogador atinge o nível 5,
         pausando os inimigos enquanto o diálogo não for concluído.
         """
-        if self.player.level >= 4 and not self.npc_spawned_for_level5:
+        if self.player.level >= 5 and not self.npc_spawned_for_level5:
             npc = spawn_npc()  # Função importada de npcs.py
             self.all_sprites.add(npc)
             self.npc_group.add(npc)

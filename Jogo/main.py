@@ -32,30 +32,27 @@ def draw_hud(screen, player, font, level):
         y_offset += 30
 
 def draw_player_health_bar(screen, player):
-    """Desenha a barra de vida do jogador no canto superior direito da tela com cores dinâmicas."""
+    """Desenha a barra de vida do jogador no canto superior direito com cores dinâmicas."""
     bar_width = 200
     bar_height = 20
-    x = WIDTH - bar_width - 20  # Posiciona no canto superior direito
-    y = 20  # Distância do topo
-
-    # Calcula a largura da barra de vida proporcional à vida do jogador
+    x = WIDTH - bar_width - 20
+    y = 20
     health_ratio = player.health / player.max_health
     fill_width = int(bar_width * health_ratio)
 
-    # Define a cor com base na porcentagem de vida
     if health_ratio > 0.5:
-        health_color = (0, 0, 255)  # Azul (100% até 51%)
+        health_color = (0, 0, 255)  # Azul
     elif health_ratio > 0.3:
-        health_color = (128, 0, 128)  # Roxo (50% até 31%)
+        health_color = (128, 0, 128)  # Roxo
     else:
-        health_color = (255, 0, 0)  # Vermelho (30% ou menos)
+        health_color = (255, 0, 0)    # Vermelho
 
-    # Desenha o contorno e a barra de vida com a cor correspondente
     outline_rect = pygame.Rect(x, y, bar_width, bar_height)
     fill_rect = pygame.Rect(x, y, fill_width, bar_height)
 
-    pygame.draw.rect(screen, (255, 255, 255), outline_rect, 2)  # Contorno branco
-    pygame.draw.rect(screen, health_color, fill_rect)  # Barra de vida colorida
+    pygame.draw.rect(screen, (255, 255, 255), outline_rect, 2)
+    pygame.draw.rect(screen, health_color, fill_rect)
+    pygame.draw.rect(screen, (0, 0, 0), outline_rect, 1)
 
 def play_music():
     """Toca a música de fundo."""
@@ -94,23 +91,18 @@ def get_player_name(screen, font):
                     name = name[:-1]
                 else:
                     name += event.unicode
-
     return None
 
-def main():
-    """Loop principal do jogo"""
-
-    # Exibe o menu antes de iniciar
-    if not menu():
-        return  
-
+def singleplayer_main():
+    """Executa o modo singleplayer do jogo."""
     pygame.init()
     screen = pygame.display.set_mode((WIDTH, HEIGHT))
     pygame.display.set_caption("RPG Game - Prototype")
     clock = pygame.time.Clock()
     font = pygame.font.SysFont("arial", 24)
 
-    inventory_db.create_sample_items()  
+    # Garante que o banco de itens esteja inicializado
+    inventory_db.create_sample_items()
 
     # Carrega o background do mapa grande
     background_path = os.path.join(os.path.dirname(__file__), "assets", "large_background.png")
@@ -121,7 +113,7 @@ def main():
         background = pygame.Surface((MAP_WIDTH, MAP_HEIGHT))
         background.fill(GRAY)
 
-    # Inicializa a câmera
+    from camera import Camera
     camera = Camera(MAP_WIDTH, MAP_HEIGHT)
 
     if not pygame.mixer.get_init() or not pygame.mixer.music.get_busy():
@@ -139,6 +131,7 @@ def main():
         all_sprites.add(player)
 
         # Cria o nível (controle de inimigos, itens e NPCs)
+        from level import Level
         level = Level(player, all_sprites, enemies_group, items_group, npc_group)
 
         running = True
@@ -146,12 +139,12 @@ def main():
             clock.tick(FPS)
             keys = pygame.key.get_pressed()
 
-            # Processamento de eventos
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     pygame.quit()
                     sys.exit()
-                if event.type == pygame.KEYDOWN:
+                elif event.type == pygame.KEYDOWN:
+                    # Teclas de ação
                     if event.key == pygame.K_SPACE:
                         player.attack(enemies_group)
                     elif event.key == pygame.K_f:
@@ -164,17 +157,17 @@ def main():
                         player.use_item("Health Potion")
                     elif event.key == pygame.K_m:
                         player.use_item("Mana Potion")
+
+                    # Opções de reinício ou voltar ao menu
                     elif event.key == pygame.K_r:
                         print("🔄 Retornando ao menu...")
-                        return main()
-                elif event.type == pygame.USEREVENT:
-                    if event.dict.get("action") == "restart":
-                        print("🔄 Reiniciando jogo...")
-                        return main()
+                        return singleplayer_main()
+                    elif event.key == pygame.K_k:
+                        print("🔄 Voltando ao menu (tecla K pressionada)...")
+                        return  # Volta para o menu principal
+
                 elif event.type == pygame.MOUSEBUTTONDOWN:
-                    # Ajusta o zoom com o scroll do mouse:
-                    # event.button == 4 -> scroll up (aumenta zoom)
-                    # event.button == 5 -> scroll down (diminui zoom)
+                    # Zoom com o scroll do mouse
                     if event.button == 4:
                         camera.zoom_factor = min(2.0, camera.zoom_factor + 0.1)
                     elif event.button == 5:
@@ -195,23 +188,23 @@ def main():
                 if player_name:
                     save_record(player_name, level.round_number)
                 print("🔄 Voltando ao menu...")
-                return main()
+                return singleplayer_main()
 
-            # Verifica se o jogador coletou algum item
+            # Coleta de itens
             collected_items = pygame.sprite.spritecollide(player, items_group, True)
             for item in collected_items:
                 item.apply_effect(player)
 
-            # Atualiza a câmera para centralizar o jogador (offset calculado sem zoom)
+            # Atualiza a câmera para centralizar o jogador
             camera.update(player)
 
             screen.fill(BLACK)
 
-            # Aplica o zoom ao background e extrai a parte visível
+            # Aplica zoom ao background
             zoomed_background = camera.apply_zoom_to_background(background)
             screen.blit(zoomed_background, (0, 0))
 
-            # Desenha os sprites com o zoom aplicado
+            # Desenha os sprites (jogador, inimigos, NPCs, etc.) com zoom
             for sprite in all_sprites:
                 zoomed_rect = camera.apply(sprite)
                 zoomed_sprite = pygame.transform.scale(sprite.image, (zoomed_rect.width, zoomed_rect.height))
@@ -225,25 +218,42 @@ def main():
                 zoomed_sprite = pygame.transform.scale(sprite.image, (zoomed_rect.width, zoomed_rect.height))
                 screen.blit(zoomed_sprite, zoomed_rect)
 
-            # Desenha a caixa de diálogo do NPC se ele estiver interagindo
+            # Caixas de diálogo NPC
             if level.current_npc and level.dialogue_active:
                 level.current_npc.draw_dialogue_box(screen, font)
 
-            # Desenha as barras de vida dos inimigos usando a posição "zoomada"
+            # Desenha barras de vida dos inimigos (zoomado)
             for enemy in enemies_group:
                 zoomed_rect = camera.apply(enemy)
                 bar_width = int(50 * camera.zoom_factor)
                 bar_height = int(5 * camera.zoom_factor)
                 fill = (enemy.health / enemy.max_health) * bar_width
-                outline_rect = pygame.Rect(zoomed_rect.centerx - bar_width // 2, zoomed_rect.top - int(10 * camera.zoom_factor), bar_width, bar_height)
-                fill_rect = pygame.Rect(zoomed_rect.centerx - bar_width // 2, zoomed_rect.top - int(10 * camera.zoom_factor), fill, bar_height)
+                outline_rect = pygame.Rect(zoomed_rect.centerx - bar_width // 2,
+                                           zoomed_rect.top - int(10 * camera.zoom_factor),
+                                           bar_width, bar_height)
+                fill_rect = pygame.Rect(zoomed_rect.centerx - bar_width // 2,
+                                        zoomed_rect.top - int(10 * camera.zoom_factor),
+                                        fill, bar_height)
                 pygame.draw.rect(screen, (255, 255, 255), outline_rect)
                 pygame.draw.rect(screen, (255, 0, 0), fill_rect)
                 pygame.draw.rect(screen, (0, 0, 0), outline_rect, 1)
 
+            # HUD
             draw_hud(screen, player, font, level)
-            draw_player_health_bar(screen, player)  
+            draw_player_health_bar(screen, player)
             pygame.display.flip()
+
+def main():
+    mode = menu()  # O menu retorna o modo selecionado: "multiplayer" ou "singleplayer"
+    if mode == "multiplayer":
+        import multiplayer
+        pygame.init()
+        screen = pygame.display.set_mode((WIDTH, HEIGHT))
+        game = multiplayer.MultiplayerGame(screen)
+        game.setup_connection()
+        game.start_game()
+    else:
+        singleplayer_main()
 
 if __name__ == "__main__":
     main()
