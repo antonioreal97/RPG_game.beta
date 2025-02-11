@@ -51,7 +51,7 @@ class Item(pygame.sprite.Sprite):
         if os.path.exists(assets_path):
             self.image = pygame.image.load(assets_path).convert_alpha()
         else:
-            print(f"⚠️ Erro: Arquivo {assets_path} não encontrado! Usando um item padrão.")
+            print(f"⚠️ Erro: Imagem do item {assets_path} não encontrada! Usando um item padrão.")
             self.image = pygame.Surface((50, 50))
             self.image.fill((255, 255, 0))
 
@@ -78,25 +78,24 @@ class Item(pygame.sprite.Sprite):
     def apply_effect(self, player):
         """
         Aplica o efeito do item ao jogador e remove o item do jogo.
-
-        Os efeitos variam conforme o nome do item ou se ele é temporário.
+        Para os itens "Mana Potion" e "Gold Coin", o item é armazenado no inventário,
+        para que o jogador use quando desejar. Para os demais itens, o efeito é aplicado imediatamente.
         """
-        if self.temporary:
-            print("🔥 Dano x2 ativado por 10 segundos!")
-            player.activate_damage_multiplier()
-        elif self.name == "Health Potion":
-            player.restore_health(50)
-            print("❤️ Poção de Vida consumida! +50 HP")
-        elif self.name == "Mana Potion":
-            player.restore_mana(30)
-            print("🔵 Poção de Mana consumida! +30 Mana")
-        elif self.name == "Gold Coin":
-            print("💰 Você pegou uma moeda de ouro!")
-        elif self.name == "Super Health Potion":
-            self.activate_super_health(player)
-            print("❤️Vida Triplica (3x)!❤️")
-
-        # Remove o item do grupo de sprites (ou seja, do jogo) após seu uso
+        if self.name in ["Mana Potion", "Gold Coin"]:
+            # Adiciona o item ao inventário do jogador para uso posterior
+            player.inventory.add_item(self)
+            print(f"🔵 {self.name} armazenada no inventário!")
+        else:
+            if self.temporary:
+                print("🔥 Dano x2 ativado por 10 segundos!")
+                player.activate_damage_multiplier()
+            elif self.name == "Health Potion":
+                player.restore_health(50)
+                print("❤️ Poção de Vida consumida! +50 HP")
+            elif self.name == "Super Health Potion":
+                self.activate_super_health(player)
+                print("❤️ Vida Triplica (3x)! ❤️")
+        # Remove o item do jogo (sprite)
         self.kill()
 
     def activate_super_health(self, player):

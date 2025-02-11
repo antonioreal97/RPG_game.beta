@@ -22,7 +22,7 @@ def draw_hud(screen, player, font, level):
     screen.blit(level_text, (10, 100))
     screen.blit(round_text, (10, 130))
 
-    # Exibe o inventário na HUD
+    # Exibe o inventário na HUD (lista de itens)
     inventory_text = font.render("Inventário:", True, WHITE)
     screen.blit(inventory_text, (10, 160))
     y_offset = 190
@@ -131,7 +131,6 @@ def singleplayer_main():
         all_sprites.add(player)
 
         # Cria o nível (controle de inimigos, itens e NPCs)
-        from level import Level
         level = Level(player, all_sprites, enemies_group, items_group, npc_group)
 
         running = True
@@ -148,44 +147,61 @@ def singleplayer_main():
                         player.attack(enemies_group)
                     elif event.key == pygame.K_f:
                         player.special_attack(enemies_group)
-                    elif event.key == pygame.K_x:
-                        level.handle_npc_interaction(keys)
+                    # Ao pressionar I, abre a interface gráfica do inventário
                     elif event.key == pygame.K_i:
-                        player.inventory.list_inventory()
+                        player.inventory.open_inventory(screen, player)
                     elif event.key == pygame.K_h:
                         player.use_item("Health Potion")
                     elif event.key == pygame.K_m:
                         player.use_item("Mana Potion")
-                    elif event.key == pygame.K_r:
-                        print("🔄 Retornando ao menu...")
-                        return singleplayer_main()
                 elif event.type == pygame.MOUSEBUTTONDOWN:
                     if event.button == 4:
                         camera.zoom_factor = min(2.0, camera.zoom_factor + 0.1)
                     elif event.button == 5:
                         camera.zoom_factor = max(0.5, camera.zoom_factor - 0.1)
 
-            # Atualiza apenas se o NPC não estiver interagindo
+            # Atualiza o jogador SEMPRE, permitindo que ele se mova e interaja
+            player.update(keys)
+            
+            # Chama a função de interação do NPC a cada frame
+            level.handle_npc_interaction(keys)
+            
+            # Atualiza inimigos, itens e nível somente se não houver interação ativa com o NPC
             if not level.npc_active:
-                player.update(keys)
                 enemies_group.update(player)
                 items_group.update()
                 level.update()
 
-            npc_group.update()
+            # Atualiza os NPCs, passando o objeto do jogador para atualizar a proximidade
+            npc_group.update(player)
 
+            # Se o jogador morrer, exibe mensagem e aguarda que pressione K para retornar ao menu
             if player.health <= 0:
+                game_over_font = pygame.font.SysFont("arial", 36)
+                game_over_text = game_over_font.render("Você morreu. Pressione K para retornar ao menu.", True, RED)
+                screen.fill(BLACK)
+                screen.blit(game_over_text, (WIDTH // 2 - game_over_text.get_width() // 2, HEIGHT // 2))
+                pygame.display.flip()
+                waiting = True
+                while waiting:
+                    for event in pygame.event.get():
+                        if event.type == pygame.QUIT:
+                            pygame.quit()
+                            sys.exit()
+                        elif event.type == pygame.KEYDOWN:
+                            if event.key == pygame.K_k:
+                                waiting = False
                 player_name = get_player_name(screen, font)
                 if player_name:
                     save_record(player_name, level.round_number)
                 print("🔄 Voltando ao menu...")
-                return singleplayer_main()
+                return main()  # Retorna ao menu principal
 
             collected_items = pygame.sprite.spritecollide(player, items_group, True)
             for item in collected_items:
                 item.apply_effect(player)
 
-            # Atualiza a câmera para centralizar o jogador (offset calculado sem zoom)
+            # Atualiza a câmera para centralizar o jogador (offset sem zoom)
             camera.update(player)
 
             screen.fill(BLACK)
@@ -208,11 +224,11 @@ def singleplayer_main():
                 zoomed_sprite = pygame.transform.scale(sprite.image, (zoomed_rect.width, zoomed_rect.height))
                 screen.blit(zoomed_sprite, zoomed_rect)
 
-            # Desenha a caixa de diálogo do NPC se ele estiver interagindo
+            # Se houver diálogo ativo, desenha a caixa de diálogo do NPC
             if level.current_npc and level.dialogue_active:
                 level.current_npc.draw_dialogue_box(screen, font)
 
-            # Desenha as barras de vida dos inimigos usando a posição "zoomada"
+            # Desenha as barras de vida dos inimigos
             for enemy in enemies_group:
                 zoomed_rect = camera.apply(enemy)
                 bar_width = int(50 * camera.zoom_factor)
@@ -241,8 +257,6 @@ def main():
         game = multiplayer.MultiplayerGame(screen)
         game.setup_connection()
         game.start_game()
-
-
     else:
         singleplayer_main()
 

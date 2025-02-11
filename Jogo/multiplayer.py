@@ -182,13 +182,19 @@ class MultiplayerSession:
                 if data:
                     state = pickle.loads(data)
                     players = state.get("players", {})
-                    enemies = state.get("enemies", {})
+                    raw_enemy_data = state.get("enemies", None)
                     # Atualiza jogadores remotos
                     for pid, pos in players.items():
                         if pid != self.player_id:
                             self.remote_players[pid] = pos
-                    # Atualiza inimigos localmente
-                    self.enemy_manager.sync_enemies(enemies)
+                    # Atualiza os inimigos usando o gerenciador, garantindo que
+                    # os dados sejam do tipo bytes para a sincronização
+                    if raw_enemy_data is not None:
+                        if isinstance(raw_enemy_data, dict):
+                            enemy_data = pickle.dumps(raw_enemy_data)
+                        else:
+                            enemy_data = raw_enemy_data
+                        self.enemy_manager.sync_enemies(enemy_data)
                 else:
                     print("[DISCONNECTED] Conexão encerrada pelo servidor.")
                     self.running = False
@@ -227,12 +233,13 @@ class MultiplayerSession:
     def draw_hud(self):
         """Desenha informações (HP, Mana, XP, Level, Round) do jogador local."""
         font = pygame.font.SysFont("arial", 24)
+        # Agora usamos o round do gerenciador de inimigos, que reflete a lógica atualizada
         texts = [
             f'HP: {self.player.health}/{self.player.max_health}',
             f'Mana: {self.player.mana}/{self.player.max_mana}',
             f'XP: {self.player.xp}/{self.player.xp_to_next_level}',
             f'Level: {self.player.level}',
-            f'Round: {self.level.round_number}'
+            f'Round: {self.enemy_manager.round_number}'
         ]
         y = 10
         for text in texts:
@@ -269,4 +276,3 @@ class MultiplayerSession:
             self.render()
         pygame.quit()
         self.client.close()
-        

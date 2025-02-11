@@ -2,7 +2,9 @@ import pygame
 import random
 import pickle
 from settings import MAP_WIDTH, MAP_HEIGHT
-from enemy import Enemy
+from enemy import Enemy as NormalEnemy
+from enemy2 import Enemy as FastEnemy
+from enemy3 import Enemy as TankEnemy
 from enemyboss import EnemyBoss  # <-- Importe sua classe Boss aqui
 
 class MultiEnemyManager:
@@ -30,13 +32,29 @@ class MultiEnemyManager:
 
     def spawn_normal_enemy(self):
         """
-        Cria e adiciona um novo inimigo normal no mapa, em posição aleatória.
+        Cria e adiciona um novo inimigo normal no mapa, escolhendo aleatoriamente
+        entre Normal, Rápido e Tanque conforme o round.
         """
         pos_x = random.randint(50, MAP_WIDTH - 50)
         pos_y = random.randint(50, MAP_HEIGHT - 50)
-        enemy = Enemy((pos_x, pos_y), self.round_number, self.all_sprites, self.items_group)
+
+        # Seleciona o tipo de inimigo baseado no round
+        if self.round_number % 3 == 0:
+            enemy_class = random.choices(
+                [NormalEnemy, FastEnemy, TankEnemy],
+                weights=[30, 30, 40]
+            )[0]
+        elif self.round_number % 2 == 0:
+            enemy_class = random.choices(
+                [NormalEnemy, FastEnemy, TankEnemy],
+                weights=[30, 50, 20]
+            )[0]
+        else:
+            enemy_class = random.choice([NormalEnemy, FastEnemy, TankEnemy])
+        
+        enemy = enemy_class((pos_x, pos_y), self.round_number, self.all_sprites, self.items_group)
         self.enemies_group.add(enemy)
-        print(f"👿 Novo inimigo (round {self.round_number}) spawnado na posição {enemy.rect.topleft}!")
+        print(f"👿 Novo inimigo ({enemy.type}) (round {self.round_number}) spawnado na posição {enemy.rect.topleft}!")
 
     def spawn_boss(self):
         """
@@ -50,8 +68,8 @@ class MultiEnemyManager:
 
     def update(self, players):
         """
-        Atualiza os inimigos (movimentação, ataque) e spawn em intervalos de tempo.
-        :param players: Lista de jogadores (ou jogador único) para o inimigo atacar.
+        Atualiza os inimigos (movimentação, ataque) e realiza o spawn em intervalos de tempo.
+        :param players: Lista de jogadores (ou jogador único) para os inimigos atacarem.
         """
         current_time = pygame.time.get_ticks()
 
@@ -66,7 +84,7 @@ class MultiEnemyManager:
 
     def get_enemy_state(self):
         """
-        Serializa o estado dos inimigos (posições, saúde, etc.) para enviar aos jogadores.
+        Serializa o estado dos inimigos (posições, saúde, tipo, etc.) para enviar aos jogadores.
         """
         enemies_data = {}
         for idx, enemy in enumerate(self.enemies_group):
@@ -75,7 +93,7 @@ class MultiEnemyManager:
                 "y": enemy.rect.y,
                 "health": enemy.health,
                 "round": self.round_number,
-                # Se quiser sincronizar outras infos, inclua aqui
+                "type": enemy.type  # Inclui o tipo: Normal, Rápido, Tanque ou Boss
             }
         return pickle.dumps(enemies_data)
 
@@ -89,18 +107,30 @@ class MultiEnemyManager:
             self.enemies_group.empty()
 
             for _, info in enemies.items():
-                # Verifica se o round é múltiplo de 10 para recriar um Boss ou um inimigo normal
-                if self.round_number % 10 == 0:
-                    from enemyboss import EnemyBoss
+                enemy_type = info.get("type", "Normal")
+                if enemy_type == "Boss":
                     enemy = EnemyBoss(
                         (info["x"], info["y"]),
                         info["round"],
                         self.all_sprites,
                         self.items_group
                     )
+                elif enemy_type == "Tanque":
+                    enemy = TankEnemy(
+                        (info["x"], info["y"]),
+                        info["round"],
+                        self.all_sprites,
+                        self.items_group
+                    )
+                elif enemy_type == "Rápido":
+                    enemy = FastEnemy(
+                        (info["x"], info["y"]),
+                        info["round"],
+                        self.all_sprites,
+                        self.items_group
+                    )
                 else:
-                    # Inimigo normal
-                    enemy = Enemy(
+                    enemy = NormalEnemy(
                         (info["x"], info["y"]),
                         info["round"],
                         self.all_sprites,

@@ -1,6 +1,8 @@
 import pygame
 import random
-from enemy import Enemy
+from enemy import Enemy as NormalEnemy
+from enemy2 import Enemy as FastEnemy
+from enemy3 import Enemy as TankEnemy
 from enemyboss import EnemyBoss  # Importa o boss
 from item import Item
 from npcs import spawn_npc
@@ -80,12 +82,25 @@ class Level:
             return
 
         pos = self.get_random_spawn_position()
-        enemy = Enemy(pos, self.round_number, self.all_sprites, self.items_group)
-        enemy.xp_reward = random.randint(15, 30)
 
+        # Seleciona o tipo de inimigo com base no round, mantendo a mesma lógica de pesos
+        if self.round_number % 3 == 0:
+            enemy_class = random.choices(
+                [NormalEnemy, FastEnemy, TankEnemy],
+                weights=[30, 30, 40]
+            )[0]
+        elif self.round_number % 2 == 0:
+            enemy_class = random.choices(
+                [NormalEnemy, FastEnemy, TankEnemy],
+                weights=[30, 50, 20]
+            )[0]
+        else:
+            enemy_class = random.choice([NormalEnemy, FastEnemy, TankEnemy])
+
+        enemy = enemy_class(pos, self.round_number, self.all_sprites, self.items_group)
         self.all_sprites.add(enemy)
         self.enemies_group.add(enemy)
-        print(f"👿 Novo inimigo spawnado! Vida: {enemy.health}, XP: {enemy.xp_reward}, Posição: {pos}")
+        print(f"👿 Novo inimigo spawnado! Tipo: {enemy.type}, Vida: {enemy.health}, XP: {enemy.xp_reward}, Posição: {pos}")
 
     def spawn_item(self):
         """Gera um item aleatório no mapa."""

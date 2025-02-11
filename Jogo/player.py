@@ -25,9 +25,15 @@ class Player(pygame.sprite.Sprite):
 
         # Animação de ataque: carrega frames de ataque
         self.attack_frames = [
-            pygame.transform.scale(pygame.image.load(os.path.join(self.current_path, "assets", "player_frame(1).png")).convert_alpha(), (1920, 1080)),
-            pygame.transform.scale(pygame.image.load(os.path.join(self.current_path, "assets", "player_frame(2).png")).convert_alpha(), (1920, 1080)),
-            pygame.transform.scale(pygame.image.load(os.path.join(self.current_path, "assets", "player_frame(3).png")).convert_alpha(), (1920, 1080))
+            pygame.transform.scale(
+                pygame.image.load(os.path.join(self.current_path, "assets", "player_frame(1).png")).convert_alpha(), (1920, 1080)
+            ),
+            pygame.transform.scale(
+                pygame.image.load(os.path.join(self.current_path, "assets", "player_frame(2).png")).convert_alpha(), (1920, 1080)
+            ),
+            pygame.transform.scale(
+                pygame.image.load(os.path.join(self.current_path, "assets", "player_frame(3).png")).convert_alpha(), (1920, 1080)
+            )
         ]
         self.attack_anim_duration = 300  # duração total da animação de ataque (ms)
         self.attack_anim_frame_time = 100  # tempo de cada frame (ms)
@@ -190,6 +196,7 @@ class Player(pygame.sprite.Sprite):
         self.level += 1
         self.xp = 0
         self.xp_to_next_level = int(self.xp_to_next_level * 1.5)
+        # Mantemos a lógica atual para restauração parcial, se desejar
         self.health = min(self.health + 15, self.max_health)
         self.mana = min(self.mana + 20, self.max_mana)
         print(f"🔥 Level UP! Novo nível: {self.level}")
@@ -204,7 +211,7 @@ class Player(pygame.sprite.Sprite):
         print("🔥 Dano x2 ativado por 10 segundos!")
 
     def activate_super_health(self):
-        """Triplica a vida do jogador por 30 segundos."""
+        """Triplica a vida do jogador por 30 segundos, se o efeito não estiver ativo."""
         if not self.super_health_active:
             print("💖 Poção de Vida Especial ativada! HP x3 por 30 segundos!")
             self.max_health *= 3
@@ -249,3 +256,14 @@ class Player(pygame.sprite.Sprite):
                     elif event.key == pygame.K_r:
                         pygame.event.post(pygame.event.Event(pygame.USEREVENT, {"action": "restart"}))
                         running = False
+
+    def round_win_bonus(self):
+        """
+        Aplica o bônus de vitória de round, aumentando permanentemente
+        o HP máximo, o HP atual, a Mana máxima e a Mana atual em 10.
+        """
+        self.max_health += 10
+        self.health += 10
+        self.max_mana += 10
+        self.mana += 10
+        print(f"🏆 Round vencido! HP e Mana aumentados em 10. Novo HP: {self.max_health} (atual: {self.health}), Nova Mana: {self.max_mana} (atual: {self.mana})")

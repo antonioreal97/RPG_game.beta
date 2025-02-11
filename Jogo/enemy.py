@@ -8,47 +8,26 @@ class Enemy(pygame.sprite.Sprite):
     def __init__(self, pos, round_number, all_sprites, items_group):
         super().__init__()
 
-        # Caminho base para as imagens dos inimigos
         self.current_path = os.path.dirname(__file__)
-        enemy_images = {
-            "Normal": os.path.join(self.current_path, "assets", "enemy.png"),
-            "Rápido": os.path.join(self.current_path, "assets", "enemy1.png"),
-            "Tanque": os.path.join(self.current_path, "assets", "enemy2.png"),
-        }
+        self.type = "Normal"
 
-        # Escolhe o tipo de inimigo conforme o round
-        self.type = self.choose_enemy_type(round_number)
-
-        # Ajustes de força e dano para cada round
+        # Multiplicadores baseados no round
         strength_multiplier = 1.5 if round_number % 2 == 0 else 1
         damage_multiplier = 0.75 if round_number % 2 == 0 else 1
 
-        # Define XP reward para o inimigo (exemplo)
+        # XP reward
         base_xp = 20
         self.xp_reward = base_xp + (round_number * 5)
 
-        # Define atributos do inimigo conforme seu tipo
-        if self.type == "Normal":
-            self.speed = ENEMY_SPEED + (round_number * 0.2)
-            self.health = self.max_health = (ENEMY_HEALTH + (round_number * 10)) * strength_multiplier
-            self.attack_damage = (10 + (round_number * 2)) * damage_multiplier
-            scale_factor = 1.0
-            self.can_be_frozen = True
-        elif self.type == "Rápido":
-            self.speed = ENEMY_SPEED + (round_number * 0.3)
-            self.health = self.max_health = (ENEMY_HEALTH + (round_number * 5)) * strength_multiplier
-            self.attack_damage = (8 + (round_number * 2)) * damage_multiplier
-            scale_factor = 1.2
-            self.can_be_frozen = True
-        elif self.type == "Tanque":
-            self.speed = ENEMY_SPEED + (round_number * 0.05)
-            self.health = self.max_health = (ENEMY_HEALTH + (round_number * 20)) * strength_multiplier
-            self.attack_damage = (15 + (round_number * 2.5)) * damage_multiplier
-            scale_factor = 1.5
-            self.can_be_frozen = False
+        # Configurações específicas para o inimigo Normal
+        self.speed = ENEMY_SPEED + (round_number * 0.2)
+        self.health = self.max_health = (ENEMY_HEALTH + (round_number * 10)) * strength_multiplier
+        self.attack_damage = (10 + (round_number * 2)) * damage_multiplier
+        scale_factor = 1.0
+        self.can_be_frozen = True
 
-        # Carrega a imagem normal do inimigo e escala
-        enemy_image_path = enemy_images[self.type]
+        # Carrega a imagem e aplica escala
+        enemy_image_path = os.path.join(self.current_path, "assets", "enemy.png")
         try:
             original_image = pygame.image.load(enemy_image_path).convert_alpha()
         except pygame.error:
@@ -56,7 +35,7 @@ class Enemy(pygame.sprite.Sprite):
             original_image = pygame.Surface((50, 50), pygame.SRCALPHA)
             original_image.fill((255, 0, 255))
 
-        # Escala do inimigo: cresce 2% a cada round
+        # Escala: aumenta 2% a cada round
         scale_factor += round_number * 0.02
         new_size = (int(128 * scale_factor), int(128 * scale_factor))
         self.normal_image = pygame.transform.scale(original_image, new_size)
@@ -64,9 +43,9 @@ class Enemy(pygame.sprite.Sprite):
         self.rect = self.image.get_rect(center=pos)
 
         # Configurações de ataque e spawn
-        self.attack_cooldown = 1000  # ms
+        self.attack_cooldown = 1000  # em ms
         self.last_attack_time = 0
-        self.spawn_time = pygame.time.get_ticks() + 2500  # Delay de spawn (2.5s)
+        self.spawn_time = pygame.time.get_ticks() + 2500  # Delay de 2.5s
         self.visible = False
 
         # Controle de congelamento
@@ -81,34 +60,20 @@ class Enemy(pygame.sprite.Sprite):
         print(f"👿 {self.type} spawnado na posição {self.rect.topleft}, XP Reward={self.xp_reward}")
 
         # --- Animação de Ataque ---
-        # Carrega os frames de ataque e os escala para new_size (mesmo tamanho que a imagem normal)
         self.attack_frames = [
             pygame.transform.scale(
-                pygame.image.load(os.path.join(self.current_path, "assets", "enemy_frame(1).png")).convert_alpha(), (1920, 1080)
+                pygame.image.load(os.path.join(self.current_path, "assets", "enemy_frame(1).png")).convert_alpha(),
+                (1920, 1080)
             ),
             pygame.transform.scale(
-                pygame.image.load(os.path.join(self.current_path, "assets", "enemy_frame(2).png")).convert_alpha(), (1920,1080)
+                pygame.image.load(os.path.join(self.current_path, "assets", "enemy_frame(2).png")).convert_alpha(),
+                (1920, 1080)
             )
         ]
         self.attack_anim_duration = 200      # Duração total da animação (ms)
         self.attack_anim_frame_time = 100    # Tempo de cada frame (ms)
-        self.attack_anim_start = None        # Tempo de início da animação
-        self.attacking = False               # Flag para indicar se está em animação de ataque
-
-    def choose_enemy_type(self, round_number):
-        """
-        Escolhe o tipo de inimigo:
-          - Em rounds múltiplos de 3: maior chance de Tanque
-          - Em rounds pares: maior chance de Rápido
-          - Caso contrário: distribuição balanceada
-        """
-        enemy_types = ["Normal", "Rápido", "Tanque"]
-        if round_number % 3 == 0:
-            return random.choices(enemy_types, weights=[30, 30, 40])[0]
-        elif round_number % 2 == 0:
-            return random.choices(enemy_types, weights=[30, 50, 20])[0]
-        else:
-            return random.choice(enemy_types)
+        self.attack_anim_start = None
+        self.attacking = False
 
     def play_attack_animation(self):
         """Inicia a animação de ataque do inimigo."""
@@ -116,16 +81,10 @@ class Enemy(pygame.sprite.Sprite):
         self.attack_anim_start = pygame.time.get_ticks()
 
     def update(self, players):
-        """
-        Atualiza o inimigo a cada frame:
-          - Torna-o visível após spawn_time;
-          - Atualiza a animação de ataque se estiver ocorrendo;
-          - Se não estiver congelado, escolhe o jogador mais próximo, move-se em direção a ele e ataca.
-        :param players: Pode ser um objeto Player ou uma lista de objetos Player.
-        """
+        """Atualiza o inimigo a cada frame."""
         current_time = pygame.time.get_ticks()
 
-        # Atualiza a animação de ataque, se ativo
+        # Atualiza a animação de ataque se estiver ocorrendo
         if self.attacking:
             elapsed = current_time - self.attack_anim_start
             frame_index = int(elapsed / self.attack_anim_frame_time)
@@ -135,7 +94,7 @@ class Enemy(pygame.sprite.Sprite):
                 self.image = self.normal_image
                 self.attacking = False
 
-        # Torna-se visível após spawn_time
+        # Torna o inimigo visível após o spawn_time
         if not self.visible:
             if current_time >= self.spawn_time:
                 self.visible = True
@@ -143,7 +102,7 @@ class Enemy(pygame.sprite.Sprite):
             else:
                 return
 
-        # Se congelado, não se move nem ataca
+        # Se estiver congelado, não age
         if current_time < self.frozen_until:
             return
 
@@ -151,7 +110,7 @@ class Enemy(pygame.sprite.Sprite):
         if not isinstance(players, list):
             players = [players]
 
-        # Seleciona o jogador mais próximo como alvo
+        # Seleciona o jogador mais próximo
         target = None
         min_dist = float('inf')
         for p in players:
@@ -173,20 +132,18 @@ class Enemy(pygame.sprite.Sprite):
         self.rect.x += int(direction.x * self.speed)
         self.rect.y += int(direction.y * self.speed)
 
-        # Tenta atacar
         self.attack(target)
 
     def attack(self, target):
-        """Ataca o jogador alvo se colidir e se o cooldown permitir."""
+        """Ataca o jogador se houver colisão e o cooldown permitir."""
         current_time = pygame.time.get_ticks()
         if self.visible and self.rect.colliderect(target.rect) and (current_time - self.last_attack_time >= self.attack_cooldown):
-            # Inicia animação de ataque
             self.play_attack_animation()
             target.take_damage(self.attack_damage)
             self.last_attack_time = current_time
 
     def take_damage(self, amount):
-        """Reduz a vida do inimigo e, se <= 0, dropa um item e remove o inimigo."""
+        """Reduz a vida do inimigo. Se <=0, dropa um item e remove o inimigo."""
         self.health -= amount
         if self.health <= 0:
             print(f"☠️ {self.type} eliminado! XP Reward={self.xp_reward}")
@@ -205,9 +162,9 @@ class Enemy(pygame.sprite.Sprite):
 
     def drop_item(self):
         """
-        Item drop (30% de chance):
-          - Se <0.1 => 'Super Health Potion'
-          - Senão => item comum aleatório
+        Realiza o drop de item (30% de chance):
+          - Se drop_chance < 0.1: 'Super Health Potion'
+          - Senão: item comum aleatório
         """
         drop_chance = random.random()
         if drop_chance < 0.3:
@@ -223,10 +180,7 @@ class Enemy(pygame.sprite.Sprite):
             print(f"🆕 Item dropado: {item_name} na posição {self.rect.center}")
 
     def draw_health_bar(self, screen, zoomed_rect=None):
-        """
-        Desenha a barra de vida acima do inimigo.
-        Se 'zoomed_rect' for fornecido, utiliza-o para calcular a posição (para zoom no multiplayer).
-        """
+        """Desenha a barra de vida acima do inimigo."""
         if not self.visible:
             return
 

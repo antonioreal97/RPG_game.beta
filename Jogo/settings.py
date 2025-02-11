@@ -35,25 +35,25 @@ GRAY   = (128, 128, 128)
 # ----------------------
 PLAYER_SPEED = 5
 PLAYER_HEALTH = 100
-PLAYER_MAX_HEALTH = 100
+PLAYER_MAX_HEALTH = 1000
 PLAYER_MANA = 50
-PLAYER_MAX_MANA = 50
+PLAYER_MAX_MANA = 300
 PLAYER_ATTACK_COOLDOWN = 500       # milissegundos
 PLAYER_DEFENSE_DURATION = 2          # segundos (ao pressionar "Q")
 PLAYER_DEFENSE_REDUCTION = 0.5       # Reduz dano pela metade durante a defesa
-PLAYER_DAMAGE = 20                   # Dano base do jogador
-PLAYER_SPECIAL_DAMAGE = 50           # Dano do ataque especial
+PLAYER_DAMAGE = 25                   # Dano base do jogador
+PLAYER_SPECIAL_DAMAGE = 65           # Dano do ataque especial
 PLAYER_SPECIAL_COOLDOWN = 3000       # Tempo de recarga do ataque especial (ms)
-PLAYER_MANA_COST = 30                # Custo de mana para ataque especial
+PLAYER_MANA_COST = 10                # Custo de mana para ataque especial
 PLAYER_XP_TO_NEXT_LEVEL = 100        # XP necessário para subir de nível
-PLAYER_HEALTH_REGEN = 5              # HP regenerado a cada subida de nível
-PLAYER_MANA_REGEN = 10               # Mana regenerada a cada subida de nível
+PLAYER_HEALTH_REGEN = 7              # HP regenerado a cada subida de nível
+PLAYER_MANA_REGEN = 15               # Mana regenerada a cada subida de nível
 
 # ----------------------
 # Enemy Settings
 # ----------------------
 ENEMY_SPEED = 2
-ENEMY_HEALTH = 50
+ENEMY_HEALTH = 60
 ENEMY_DAMAGE = 10
 ENEMY_ATTACK_COOLDOWN = 1000       # milissegundos
 ENEMY_DROP_CHANCE = 0.3            # 30% de chance de dropar um item ao morrer
@@ -63,7 +63,7 @@ ENEMY_FREEZE_DURATION = 1500       # milissegundos que o inimigo fica congelado 
 # Round Settings
 # ----------------------
 ROUND_ENEMY_INCREMENT = 1          # Incrementa a quantidade de inimigos a cada round
-ROUND_NPC_INTERVAL = 3             # NPCs aparecem a cada 3 rounds
+ROUND_NPC_INTERVAL = 5             # NPCs aparecem a cada 3 rounds
 ROUND_DELAY = 3000                 # Tempo de espera antes de iniciar um novo round (ms)
 
 # ----------------------
@@ -71,14 +71,14 @@ ROUND_DELAY = 3000                 # Tempo de espera antes de iniciar um novo ro
 # ----------------------
 ITEM_DROP_RATE = 6               # Um item cai a cada 6 inimigos mortos
 SUPER_HEALTH_DROP_CHANCE = 0.3   # 30% de chance de dropar a Super Health Potion
-ITEM_EFFECT_DURATION = 10        # Duração de efeitos especiais (segundos)
+ITEM_EFFECT_DURATION = 15        # Duração de efeitos especiais (segundos)
 ITEM_TYPES = ["Health Potion", "Mana Potion", "Gold Coin", "Super Health Potion"]
 
 # ----------------------
 # NPC Settings
 # ----------------------
 NPC_SCALE_HEIGHT = 200           # Altura fixa dos NPCs (mantém a proporção)
-NPC_DIALOGUE_DELAY = 1000        # Delay entre as falas dos NPCs (ms)
+NPC_DIALOGUE_DELAY = 2000        # Delay entre as falas dos NPCs (ms)
 NPC_INTERACTION_DISTANCE = 100   # Distância mínima para interagir com NPCs
 
 # ----------------------
@@ -91,4 +91,4 @@ SFX_VOLUME = 0.2                 # Volume dos efeitos sonoros (ataque, dano, etc
 # General Game Settings
 # ----------------------
 FONT_NAME = 'arial'
-GAME_OVER_DELAY = 5000           # Delay antes de voltar ao menu após Game Over (ms)
+GAME_OVER_DELAY = 3000           # Delay antes de voltar ao menu após Game Over (ms)

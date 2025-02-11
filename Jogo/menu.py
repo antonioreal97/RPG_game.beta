@@ -71,14 +71,14 @@ def show_records(screen):
 def game_mode_menu(screen):
     """
     Exibe um sub-menu para o jogador escolher entre Singleplayer e Multiplayer,
-    utilizando a imagem de fundo 'background1.png'.
+    utilizando a imagem de fundo 'background.png'.
     Retorna uma string indicando o modo selecionado.
     """
     running = True
     font = pygame.font.SysFont("arial", 36)
     
     # Carrega a imagem de fundo para o sub-menu
-    background_path = os.path.join(os.path.dirname(__file__), "assets", "background1.png")
+    background_path = os.path.join(os.path.dirname(__file__), "assets", "background.png")
     if os.path.exists(background_path):
         background = pygame.image.load(background_path).convert()
         background = pygame.transform.scale(background, (WIDTH, HEIGHT))

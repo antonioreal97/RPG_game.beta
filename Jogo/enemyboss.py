@@ -21,36 +21,42 @@ class EnemyBoss(pygame.sprite.Sprite):
             print(f"⚠️ ERRO: Imagem do Boss '{boss_image_path}' não encontrada!")
             original_image = pygame.Surface((100, 100), pygame.SRCALPHA)
             original_image.fill((255, 0, 255))
-
+        
+        # Calcula um fator de escala baseado no round
         scale_factor = 2.0 + round_number * 0.05
         new_size = (int(256 * scale_factor), int(256 * scale_factor))
         self.image = pygame.transform.scale(original_image, new_size)
         self.rect = self.image.get_rect(center=pos)
 
+        # Atributos de saúde e dano ajustados conforme o round
         self.max_health = 500 + round_number * 50
         self.health = self.max_health
         self.attack_damage = 30 + round_number * 5
         self.speed = 1.5
-        self.attack_cooldown = 1500
+        self.attack_cooldown = 1500  # em milissegundos
         self.last_attack_time = 0
 
         self.special_attack_cooldown = 5000
         self.last_special_attack = 0
 
+        # Tempo para spawn (o boss não aparece imediatamente)
         self.spawn_time = pygame.time.get_ticks() + 3000
         self.visible = False
 
         self.all_sprites = all_sprites
         self.items_group = items_group
 
+        # Estado inicial do boss
         self.state = STATE_IDLE
 
+        # Adiciona o boss ao grupo de sprites
         self.all_sprites.add(self)
         print(f"👹 Boss spawnado na posição {self.rect.topleft}!")
 
     def update(self, player):
         current_time = pygame.time.get_ticks()
         
+        # Controle do spawn: o boss só fica visível após spawn_time
         if not self.visible:
             if current_time >= self.spawn_time:
                 self.visible = True
@@ -58,12 +64,15 @@ class EnemyBoss(pygame.sprite.Sprite):
             else:
                 return
 
+        # Se a saúde cair abaixo de 50%, ativa o estado especial
         if self.health < self.max_health * 0.5:
             self.state = STATE_SPECIAL
 
+        # Se estiver inativo e o jogador estiver próximo, passa para o estado de perseguição
         if self.state == STATE_IDLE and self._player_is_near(player):
             self.state = STATE_CHASE
 
+        # Chama o comportamento conforme o estado atual
         if self.state == STATE_IDLE:
             self.idle_behavior()
         elif self.state == STATE_CHASE:
@@ -80,6 +89,7 @@ class EnemyBoss(pygame.sprite.Sprite):
         return distance < 300
 
     def idle_behavior(self):
+        # Comportamento de espera; pode ser implementado se desejado
         pass
 
     def chase_player(self, player):
@@ -89,7 +99,7 @@ class EnemyBoss(pygame.sprite.Sprite):
             direction = direction.normalize()
         self.rect.x += int(direction.x * self.speed)
         self.rect.y += int(direction.y * self.speed)
-
+        # Se colidir com o jogador, passa para o estado de ataque
         if self.rect.colliderect(player.rect):
             self.state = STATE_ATTACK
 
@@ -106,6 +116,7 @@ class EnemyBoss(pygame.sprite.Sprite):
         if current_time - self.last_special_attack >= self.special_attack_cooldown:
             damage = self.attack_damage * 2
             player.take_damage(damage)
+            # Se o jogador possuir função de stun, aplica stun por 2000 ms
             if hasattr(player, 'stun'):
                 player.stun(2000)
             self.last_special_attack = current_time
@@ -117,6 +128,7 @@ class EnemyBoss(pygame.sprite.Sprite):
                                         self.rect.centery - player.rect.centery)
         if direction.length() != 0:
             direction = direction.normalize()
+        # Evade com velocidade maior (2x a velocidade normal)
         self.rect.x += int(direction.x * self.speed * 2)
         self.rect.y += int(direction.y * self.speed * 2)
         self.state = STATE_CHASE
@@ -148,4 +160,3 @@ class EnemyBoss(pygame.sprite.Sprite):
             pygame.draw.rect(screen, WHITE, outline_rect)
             pygame.draw.rect(screen, RED, fill_rect)
             pygame.draw.rect(screen, BLACK, outline_rect, 2)
-
