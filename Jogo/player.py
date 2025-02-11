@@ -16,12 +16,23 @@ class Player(pygame.sprite.Sprite):
             "special1": os.path.join(self.current_path, "assets", "player1.png"),
             "special2": os.path.join(self.current_path, "assets", "player2.png"),
         }
-
         # Carrega a imagem normal
-        self.image = pygame.transform.scale(
-            pygame.image.load(self.image_paths["normal"]).convert_alpha(), (150, 150)
+        self.normal_image = pygame.transform.scale(
+            pygame.image.load(self.image_paths["normal"]).convert_alpha(), (125, 125)
         )
+        self.image = self.normal_image
         self.rect = self.image.get_rect(center=pos)
+
+        # Animação de ataque: carrega frames de ataque
+        self.attack_frames = [
+            pygame.transform.scale(pygame.image.load(os.path.join(self.current_path, "assets", "player_frame(1).png")).convert_alpha(), (1920, 1080)),
+            pygame.transform.scale(pygame.image.load(os.path.join(self.current_path, "assets", "player_frame(2).png")).convert_alpha(), (1920, 1080)),
+            pygame.transform.scale(pygame.image.load(os.path.join(self.current_path, "assets", "player_frame(3).png")).convert_alpha(), (1920, 1080))
+        ]
+        self.attack_anim_duration = 300  # duração total da animação de ataque (ms)
+        self.attack_anim_frame_time = 100  # tempo de cada frame (ms)
+        self.attack_anim_start = None   # hora de início da animação
+        self.attacking = False
 
         # Atributos do jogador
         self.speed = PLAYER_SPEED
@@ -55,7 +66,7 @@ class Player(pygame.sprite.Sprite):
         self.image_change_end_time = 0  # Momento em que a imagem deve voltar ao normal
 
     def update(self, keys):
-        """Atualiza a movimentação do jogador e verifica efeitos ativos."""
+        """Atualiza a movimentação do jogador, animação de ataque e verifica efeitos ativos."""
         dx, dy = 0, 0
         if keys[pygame.K_w]:
             dy = -self.speed
@@ -70,15 +81,31 @@ class Player(pygame.sprite.Sprite):
         self.rect.x = max(0, min(MAP_WIDTH - self.rect.width, self.rect.x + dx))
         self.rect.y = max(0, min(MAP_HEIGHT - self.rect.height, self.rect.y + dy))
 
+        # Atualiza a animação de ataque, se estiver ocorrendo
+        if self.attacking:
+            elapsed = pygame.time.get_ticks() - self.attack_anim_start
+            frame_index = int(elapsed / self.attack_anim_frame_time)
+            if frame_index < len(self.attack_frames):
+                self.image = self.attack_frames[frame_index]
+            else:
+                # Final da animação; volta para imagem normal
+                self.image = self.normal_image
+                self.attacking = False
+
         # Verifica se os buffs ou efeitos especiais expiraram
         self.check_buffs()
         self.check_image_reset()
+
+    def play_attack_animation(self):
+        """Inicia a animação de ataque."""
+        self.attacking = True
+        self.attack_anim_start = pygame.time.get_ticks()
 
     def collect_special_item(self):
         """Altera a imagem do jogador ao pegar um item especial."""
         current_time = time.time()
 
-        if current_time - self.special_item_time < 10:  # Se pegou outro item especial em menos de 10s
+        if current_time - self.special_item_time < 10:
             self.image = pygame.transform.scale(
                 pygame.image.load(self.image_paths["special2"]).convert_alpha(), (180, 180)
             )
@@ -89,23 +116,23 @@ class Player(pygame.sprite.Sprite):
             )
             print("🟢 O jogador pegou um item especial! Mudou para player1.png")
 
-        # Atualiza os tempos de troca de imagem
         self.special_item_time = current_time
-        self.image_change_end_time = current_time + 10  # Efeito especial dura 10 segundos
+        self.image_change_end_time = current_time + 10
 
     def check_image_reset(self):
         """Verifica se a imagem do jogador deve voltar à normalidade."""
         if time.time() >= self.image_change_end_time and self.image_change_end_time != 0:
-            self.image = pygame.transform.scale(
-                pygame.image.load(self.image_paths["normal"]).convert_alpha(), (150, 150)
-            )
+            self.image = self.normal_image
             self.image_change_end_time = 0
             print("🔄 O tempo do efeito especial acabou. Voltando para a imagem normal.")
 
     def attack(self, enemies_group):
-        """Realiza o ataque normal."""
+        """Realiza o ataque normal e toca a animação de ataque."""
         current_time = pygame.time.get_ticks()
         if current_time - self.last_attack >= self.attack_cooldown:
+            # Inicia animação de ataque
+            self.play_attack_animation()
+
             damage = (self.base_damage + (self.level * 2)) * self.damage_multiplier
 
             for enemy in enemies_group.copy():
@@ -148,7 +175,6 @@ class Player(pygame.sprite.Sprite):
         """Reduz o HP do jogador ao receber dano."""
         self.health -= amount
         print(f"💥 Dano recebido: {amount}. HP atual: {self.health}/{self.max_health}")
-
         if self.health <= 0:
             self.game_over()
 
@@ -156,7 +182,6 @@ class Player(pygame.sprite.Sprite):
         """Adiciona XP e verifica se o jogador sobe de nível."""
         self.xp += amount
         print(f"🎉 XP Gained: {amount}! Total XP: {self.xp}/{self.xp_to_next_level}")
-
         if self.xp >= self.xp_to_next_level:
             self.level_up()
 
@@ -165,11 +190,8 @@ class Player(pygame.sprite.Sprite):
         self.level += 1
         self.xp = 0
         self.xp_to_next_level = int(self.xp_to_next_level * 1.5)
-
-        # Ganha +15 HP e +20 Mana por nível (sem ultrapassar os máximos)
         self.health = min(self.health + 15, self.max_health)
         self.mana = min(self.mana + 20, self.max_mana)
-
         print(f"🔥 Level UP! Novo nível: {self.level}")
         print(f"❤️ HP restaurado para {self.health}/{self.max_health}")
         print(f"🔵 Mana restaurada para {self.mana}/{self.max_mana}")
@@ -196,9 +218,8 @@ class Player(pygame.sprite.Sprite):
             self.damage_multiplier = 1
             self.multiplier_active = False
             print("⏳ Dano x2 expirado!")
-
         if self.super_health_active and time.time() >= self.super_health_end_time:
-            self.max_health //= 3  # Retorna ao valor normal
+            self.max_health //= 3
             self.health = min(self.health, self.max_health)
             self.super_health_active = False
             print("💖 Poção de Vida Especial acabou! HP voltou ao normal.")
@@ -206,7 +227,6 @@ class Player(pygame.sprite.Sprite):
     def game_over(self):
         """Exibe a tela de Game Over e aguarda a ação do jogador."""
         print("💀 GAME OVER! Você foi derrotado.")
-
         screen = pygame.display.set_mode((WIDTH, HEIGHT))
         gameover_path = os.path.join(os.path.dirname(__file__), "assets", "gameover.png")
         gameover_image = pygame.image.load(gameover_path).convert()
@@ -218,7 +238,6 @@ class Player(pygame.sprite.Sprite):
             text = font.render("Pressione R para Reiniciar ou ESC para Sair", True, (255, 255, 255))
             screen.blit(text, (WIDTH // 2 - 200, HEIGHT - 100))
             pygame.display.flip()
-
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     pygame.quit()

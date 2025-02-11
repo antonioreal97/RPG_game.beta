@@ -5,7 +5,7 @@ import pickle
 # Configurações do servidor
 # Para aceitar conexões de qualquer IP, use '0.0.0.0'. 
 # Se você estiver apenas testando localmente, pode usar '127.0.0.1'.
-SERVER_IP = '127.0.0.1'
+SERVER_IP = '0.0.0.0'
 PORT = 5555
 
 # Lista para armazenar as conexões dos clientes

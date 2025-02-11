@@ -45,7 +45,7 @@ def draw_player_health_bar(screen, player):
     elif health_ratio > 0.3:
         health_color = (128, 0, 128)  # Roxo
     else:
-        health_color = (255, 0, 0)    # Vermelho
+        health_color = (255, 0, 0)  # Vermelho
 
     outline_rect = pygame.Rect(x, y, bar_width, bar_height)
     fill_rect = pygame.Rect(x, y, fill_width, bar_height)
@@ -101,7 +101,6 @@ def singleplayer_main():
     clock = pygame.time.Clock()
     font = pygame.font.SysFont("arial", 24)
 
-    # Garante que o banco de itens esteja inicializado
     inventory_db.create_sample_items()
 
     # Carrega o background do mapa grande
@@ -113,6 +112,7 @@ def singleplayer_main():
         background = pygame.Surface((MAP_WIDTH, MAP_HEIGHT))
         background.fill(GRAY)
 
+    # Inicializa a câmera
     from camera import Camera
     camera = Camera(MAP_WIDTH, MAP_HEIGHT)
 
@@ -144,7 +144,6 @@ def singleplayer_main():
                     pygame.quit()
                     sys.exit()
                 elif event.type == pygame.KEYDOWN:
-                    # Teclas de ação
                     if event.key == pygame.K_SPACE:
                         player.attack(enemies_group)
                     elif event.key == pygame.K_f:
@@ -157,17 +156,10 @@ def singleplayer_main():
                         player.use_item("Health Potion")
                     elif event.key == pygame.K_m:
                         player.use_item("Mana Potion")
-
-                    # Opções de reinício ou voltar ao menu
                     elif event.key == pygame.K_r:
                         print("🔄 Retornando ao menu...")
                         return singleplayer_main()
-                    elif event.key == pygame.K_k:
-                        print("🔄 Voltando ao menu (tecla K pressionada)...")
-                        return  # Volta para o menu principal
-
                 elif event.type == pygame.MOUSEBUTTONDOWN:
-                    # Zoom com o scroll do mouse
                     if event.button == 4:
                         camera.zoom_factor = min(2.0, camera.zoom_factor + 0.1)
                     elif event.button == 5:
@@ -182,7 +174,6 @@ def singleplayer_main():
 
             npc_group.update()
 
-            # Verifica se o jogador morreu
             if player.health <= 0:
                 player_name = get_player_name(screen, font)
                 if player_name:
@@ -190,21 +181,20 @@ def singleplayer_main():
                 print("🔄 Voltando ao menu...")
                 return singleplayer_main()
 
-            # Coleta de itens
             collected_items = pygame.sprite.spritecollide(player, items_group, True)
             for item in collected_items:
                 item.apply_effect(player)
 
-            # Atualiza a câmera para centralizar o jogador
+            # Atualiza a câmera para centralizar o jogador (offset calculado sem zoom)
             camera.update(player)
 
             screen.fill(BLACK)
 
-            # Aplica zoom ao background
+            # Aplica o zoom ao background e extrai a parte visível
             zoomed_background = camera.apply_zoom_to_background(background)
             screen.blit(zoomed_background, (0, 0))
 
-            # Desenha os sprites (jogador, inimigos, NPCs, etc.) com zoom
+            # Desenha os sprites com o zoom aplicado
             for sprite in all_sprites:
                 zoomed_rect = camera.apply(sprite)
                 zoomed_sprite = pygame.transform.scale(sprite.image, (zoomed_rect.width, zoomed_rect.height))
@@ -218,19 +208,19 @@ def singleplayer_main():
                 zoomed_sprite = pygame.transform.scale(sprite.image, (zoomed_rect.width, zoomed_rect.height))
                 screen.blit(zoomed_sprite, zoomed_rect)
 
-            # Caixas de diálogo NPC
+            # Desenha a caixa de diálogo do NPC se ele estiver interagindo
             if level.current_npc and level.dialogue_active:
                 level.current_npc.draw_dialogue_box(screen, font)
 
-            # Desenha barras de vida dos inimigos (zoomado)
+            # Desenha as barras de vida dos inimigos usando a posição "zoomada"
             for enemy in enemies_group:
                 zoomed_rect = camera.apply(enemy)
                 bar_width = int(50 * camera.zoom_factor)
                 bar_height = int(5 * camera.zoom_factor)
                 fill = (enemy.health / enemy.max_health) * bar_width
                 outline_rect = pygame.Rect(zoomed_rect.centerx - bar_width // 2,
-                                           zoomed_rect.top - int(10 * camera.zoom_factor),
-                                           bar_width, bar_height)
+                                             zoomed_rect.top - int(10 * camera.zoom_factor),
+                                             bar_width, bar_height)
                 fill_rect = pygame.Rect(zoomed_rect.centerx - bar_width // 2,
                                         zoomed_rect.top - int(10 * camera.zoom_factor),
                                         fill, bar_height)
@@ -238,7 +228,6 @@ def singleplayer_main():
                 pygame.draw.rect(screen, (255, 0, 0), fill_rect)
                 pygame.draw.rect(screen, (0, 0, 0), outline_rect, 1)
 
-            # HUD
             draw_hud(screen, player, font, level)
             draw_player_health_bar(screen, player)
             pygame.display.flip()
@@ -252,6 +241,8 @@ def main():
         game = multiplayer.MultiplayerGame(screen)
         game.setup_connection()
         game.start_game()
+
+
     else:
         singleplayer_main()
 

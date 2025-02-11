@@ -12,9 +12,9 @@ from multienemy import MultiEnemyManager
 from settings import WIDTH, HEIGHT, FPS, MAP_WIDTH, MAP_HEIGHT, WHITE, RED, BLACK, MUSIC_VOLUME
 from camera import Camera
 
-# Configurações do servidor
-SERVER_IP_DEFAULT = '127.0.0.1'
-PORT = 5555
+# Domínio padrão (ngrok) e porta padrão para desenvolvimento local (pode ser alterada pelo usuário)
+SERVER_IP_DEFAULT = '0.tcp.sa.ngrok.io'
+PORT = 5555  # Este valor pode ser sobrescrito via entrada do usuário
 COLOR_REMOTE = (255, 0, 0)
 
 def start_local_server():
@@ -32,13 +32,11 @@ def play_intro_music():
     """
     music_path = os.path.join(os.path.dirname(__file__), "assets", "intro.mp3")
     if os.path.exists(music_path):
-        # Inicializa mixer (se ainda não estiver inicializado)
         if not pygame.mixer.get_init():
             pygame.mixer.init()
-        # Carrega e reproduz a música
         pygame.mixer.music.load(music_path)
-        pygame.mixer.music.set_volume(MUSIC_VOLUME)  # Ex.: 0.1 no settings
-        pygame.mixer.music.play(-1)  # -1 = loop infinito
+        pygame.mixer.music.set_volume(MUSIC_VOLUME)
+        pygame.mixer.music.play(-1)  # Loop infinito
         print("🎵 Tocando intro.mp3 no modo Multiplayer.")
     else:
         print("⚠️ Arquivo intro.mp3 não encontrado. Música não será reproduzida no multiplayer.")
@@ -46,32 +44,29 @@ def play_intro_music():
 class MultiplayerGame:
     def __init__(self, screen):
         """
-        Gera a tela principal para as entradas iniciais
-        (se o jogador quer ser host, IP do servidor, nome do player).
+        Cria a tela principal para as entradas iniciais (se o jogador quer ser host,
+        e para inserir a porta do servidor e o nome do jogador).
         """
         self.screen = screen
         self.clock = pygame.time.Clock()
         self.server_ip = None
+        self.port = None
         self.player_id = None
         self.running = True
 
     def draw_input_screen(self, prompt):
         """
-        Desenha uma tela de entrada para coletar dados do usuário (host ou IP, nome do player).
+        Desenha uma tela de entrada para coletar dados do usuário (por exemplo, porta ou nome).
         """
         input_text = ""
         font = pygame.font.SysFont("arial", 30)
-
         while True:
             self.screen.fill(BLACK)
             prompt_text = font.render(prompt, True, WHITE)
             self.screen.blit(prompt_text, (WIDTH // 2 - 200, HEIGHT // 2 - 50))
-
             input_surface = font.render(input_text, True, WHITE)
             self.screen.blit(input_surface, (WIDTH // 2 - 100, HEIGHT // 2))
-
             pygame.display.flip()
-
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     pygame.quit()
@@ -84,24 +79,42 @@ class MultiplayerGame:
                     else:
                         input_text += event.unicode
 
+    def display_message(self, message, duration=3000):
+        """Exibe uma mensagem na tela por 'duration' ms."""
+        font = pygame.font.SysFont("arial", 24)
+        self.screen.fill(BLACK)
+        text = font.render(message, True, WHITE)
+        rect = text.get_rect(center=(WIDTH // 2, HEIGHT // 2))
+        self.screen.blit(text, rect)
+        pygame.display.flip()
+        pygame.time.delay(duration)
+
     def setup_connection(self):
-        """Pergunta se o jogador é host e obtém o IP/nome do jogador."""
+        """
+        Pergunta se o jogador é host e obtém os dados de conexão.
+        O domínio padrão será 0.tcp.sa.ngrok.io; o usuário deve inserir apenas a porta.
+        """
         choice = self.draw_input_screen("Você deseja ser o host? (s/n)")
+        # Utiliza sempre o domínio padrão (ngrok)
+        self.server_ip = SERVER_IP_DEFAULT
         if choice.lower() == 's':
             start_local_server()
-            self.server_ip = SERVER_IP_DEFAULT
-        else:
-            self.server_ip = self.draw_input_screen("Digite o IP do servidor:")
-
+            self.display_message("Seu domínio é: " + self.server_ip + "\nCompartilhe este endereço com seus convidados.", 5000)
+        # Solicita a porta do servidor (seja para host ou para conectar)
+        port_str = self.draw_input_screen("Digite a porta do servidor:")
+        try:
+            self.port = int(port_str)
+        except ValueError:
+            print("Porta inválida.")
+            sys.exit()
         self.player_id = self.draw_input_screen("Digite seu nome:")
 
     def start_game(self):
         """
-        Cria a instância da sessão multiplayer e inicia o loop de jogo.
-        Também toca a música de fundo intro.mp3, se existir.
+        Cria a instância da sessão multiplayer, toca a música de fundo e inicia o loop do jogo.
         """
-        play_intro_music()  # <-- Toca a música antes de entrar no loop do game
-        game_instance = MultiplayerSession(self.server_ip, PORT, self.player_id, self.screen)
+        play_intro_music()
+        game_instance = MultiplayerSession(self.server_ip, self.port, self.player_id, self.screen)
         game_instance.run()
 
 class MultiplayerSession:
@@ -133,7 +146,6 @@ class MultiplayerSession:
         self.enemies_group = pygame.sprite.Group()
         self.items_group = pygame.sprite.Group()
         self.npc_group = pygame.sprite.Group()
-
         self.all_sprites.add(self.player)
 
         # Gerenciador de inimigos para multiplayer
@@ -155,7 +167,6 @@ class MultiplayerSession:
         except Exception as e:
             print(f"[ERROR] Erro ao conectar ao servidor: {e}")
             sys.exit()
-
         init_pos = {"x": self.player.rect.x, "y": self.player.rect.y}
         self.send_data({
             "action": "register",
@@ -172,13 +183,11 @@ class MultiplayerSession:
                     state = pickle.loads(data)
                     players = state.get("players", {})
                     enemies = state.get("enemies", {})
-
-                    # Atualiza lista de jogadores remotos
+                    # Atualiza jogadores remotos
                     for pid, pos in players.items():
                         if pid != self.player_id:
                             self.remote_players[pid] = pos
-
-                    # Atualiza inimigos localmente (posições, HP, etc.)
+                    # Atualiza inimigos localmente
                     self.enemy_manager.sync_enemies(enemies)
                 else:
                     print("[DISCONNECTED] Conexão encerrada pelo servidor.")
@@ -201,11 +210,8 @@ class MultiplayerSession:
         """Captura e processa os eventos do jogador local."""
         keys = pygame.key.get_pressed()
         self.player.update(keys)
-
-        # Envia posição atual
         pos = {"x": self.player.rect.x, "y": self.player.rect.y}
         self.send_data({"action": "move", "player_id": self.player_id, "position": pos})
-
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 self.running = False
@@ -214,6 +220,9 @@ class MultiplayerSession:
                     self.player.attack(self.enemies_group)
                 elif event.key == pygame.K_f:
                     self.player.special_attack(self.enemies_group)
+                elif event.key == pygame.K_k:
+                    print("🔄 Voltando para o menu principal (tecla K pressionada)...")
+                    self.running = False
 
     def draw_hud(self):
         """Desenha informações (HP, Mana, XP, Level, Round) do jogador local."""
@@ -235,25 +244,17 @@ class MultiplayerSession:
         self.camera.update(self.player)
         zoomed_background = self.camera.apply_zoom_to_background(self.background)
         self.screen.blit(zoomed_background, (0, 0))
-
-        # Desenha inimigos
         for enemy in self.enemies_group:
             zoomed_rect = self.camera.apply(enemy)
             self.screen.blit(enemy.image, zoomed_rect)
             enemy.draw_health_bar(self.screen, zoomed_rect)
-
-        # Desenha jogadores remotos
         for pid, pos in self.remote_players.items():
-            # Converte coords do mundo => coords da tela
             zoomed_x = int((pos["x"] - self.camera.camera_rect.x) * self.camera.zoom_factor)
             zoomed_y = int((pos["y"] - self.camera.camera_rect.y) * self.camera.zoom_factor)
             pygame.draw.circle(self.screen, COLOR_REMOTE, (zoomed_x, zoomed_y), 20)
-
-        # Desenha jogador local
         zoomed_rect = self.camera.apply(self.player)
         scaled_player = pygame.transform.scale(self.player.image, (zoomed_rect.width, zoomed_rect.height))
         self.screen.blit(scaled_player, zoomed_rect)
-
         self.draw_hud()
         pygame.display.flip()
 
@@ -261,14 +262,11 @@ class MultiplayerSession:
         """Loop principal do multiplayer."""
         listener_thread = threading.Thread(target=self.listen_for_updates, daemon=True)
         listener_thread.start()
-
         while self.running:
             self.process_events()
-            # Atualiza inimigos localmente
             players_list = [self.player]
             self.enemy_manager.update(players_list)
-
             self.render()
-
         pygame.quit()
         self.client.close()
+        
