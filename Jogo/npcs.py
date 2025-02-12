@@ -149,7 +149,7 @@ def spawn_npc():
             "dialogues": [
                 "Eu protejo este local há mais tempo do que você pode imaginar...",
                 "Cuidado! Há criaturas nas profundezas que não deveriam ser despertadas.",
-                "Se encontrar uma chave de runas, traga para mim. Posso lhe contar mais sobre o que aconteceu aqui."
+                "Se encontrar uma chave de runas, traga para mim. Posso lhe contar mais sobre."
             ]
         }
     ]

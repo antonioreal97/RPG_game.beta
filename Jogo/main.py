@@ -71,11 +71,11 @@ def get_player_name(screen, font):
     input_active = True
 
     while input_active:
-        screen.fill(BLACK)
-        prompt_text = font.render("Digite seu nome para salvar o recorde:", True, WHITE)
+        screen.fill(WHITE)
+        prompt_text = font.render("Digite seu nome para salvar o recorde:", True, BLACK)
         screen.blit(prompt_text, (WIDTH // 2 - 200, HEIGHT // 2 - 50))
 
-        name_text = font.render(name, True, WHITE)
+        name_text = font.render(name, True, BLACK)
         screen.blit(name_text, (WIDTH // 2 - 100, HEIGHT // 2))
 
         pygame.display.flip()

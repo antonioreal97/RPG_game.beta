@@ -1,7 +1,7 @@
 import pygame
 import sys
 import os
-from settings import WIDTH, HEIGHT, WHITE, BLACK
+from settings import WIDTH, HEIGHT, WHITE, BLACK, RED
 
 RECORDS_FILE = "records.txt"
 
@@ -78,7 +78,7 @@ def game_mode_menu(screen):
     font = pygame.font.SysFont("arial", 36)
     
     # Carrega a imagem de fundo para o sub-menu
-    background_path = os.path.join(os.path.dirname(__file__), "assets", "background.png")
+    background_path = os.path.join(os.path.dirname(__file__), "assets", "bck_grnd.png")
     if os.path.exists(background_path):
         background = pygame.image.load(background_path).convert()
         background = pygame.transform.scale(background, (WIDTH, HEIGHT))
@@ -92,7 +92,7 @@ def game_mode_menu(screen):
     
     while running:
         screen.blit(background, (0, 0))
-        draw_text(screen, "Escolha o Modo de Jogo", font, WHITE, WIDTH // 2, HEIGHT // 2 - 120)
+        draw_text(screen, "Escolha o Modo de Jogo", font, RED, WIDTH // 2, HEIGHT // 2 - 120)
         
         pygame.draw.rect(screen, (50, 50, 50), button_single)
         pygame.draw.rect(screen, (50, 50, 50), button_multi)
