@@ -3,7 +3,7 @@ RPG Game in Python
 
 # 🎮 RPG game (Python + Pygame)
 
-![Game Screenshot](assets/large_background.png)
+![Game Screenshot](Jogo/assets/large_background.png)
 
 Um protótipo inspirado em *Diablo 3* feito em **Python** usando **Pygame**, com movimentação, IA de inimigos, ataques, inventário e integração com banco de dados MongoDB.
 
@@ -53,19 +53,19 @@ Este projeto é um protótipo de um **RPG de ação**, semelhante a *Diablo*, co
 ## 💂🏻🛡️ Capturas de Tela
 
 ### 📌 Menu Inicial
-![Tela Menu](prints/1-Tela_Menu.png)
+![Tela Menu](Jogo/prints/1-Tela_Menu.png)
 
 ### 🎮 Seleção de Modo de Jogo
-![Game Mode](prints/2-Game_mode.png)
+![Game Mode](Jogo/prints/2-Game_mode.png)
 
 ### 🔥 Gameplay
-![Game Play](prints/3-Game_Play.png)
+![Game Play](Jogo/prints/3-Game_Play.png)
 
 ### 🧑‍🎒 Inventário
-![Inventário](prints/4-Inventario.png)
+![Inventário](Jogo/prints/4-Inventario.png)
 
 ### ☠️ Tela de Game Over
-![Game Over](prints/5-Game_Over.png)
+![Game Over](Jogo/prints/5-Game_Over.png)
 
 ---
 
