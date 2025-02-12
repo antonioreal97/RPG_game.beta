@@ -79,7 +79,13 @@ Jogo/
 │   ├── player.png
 │   ├── player1.png
 │   ├── player2.png
-├── enemy.py                # Classe dos inimigos
+├── enemy.py                # Classe dos inimigos Normais
+├── enemy2.py               # Classe dos inimigos Rápidos
+├── enemy3.py               # Classe dos inimigos Tanques
+├── enemyboss.py            # Classe dos inimigos Boss
+├── menu.py                 # Interface do menu
+├── camera.py               # Classe da câmera
+├── npcs.py                 # Classe dos NPCs
 ├── inventory.py            # Sistema de inventário
 ├── inventory_db.py         # Banco de dados dos itens
 ├── item.py                 # Definição dos itens coletáveis
@@ -96,17 +102,46 @@ Jogo/
 ### 1️⃣ Clone o repositório
 ```sh
 git clone https://github.com/antonioreal97/RPG_game.beta.git
-cd diablo3-clone
+cd RPG_game.beta
 ```
 
 ### 2️⃣ Instale as dependências
 Certifique-se de que tem o Python instalado e instale o Pygame:
 ```sh
 pip install pygame
+pip install pymongo
+pip install python-dotenv
 ```
 
-### 3️⃣ Execute o jogo
+### 3️⃣ Configuração do Ambiente
+
+Para configurar as variáveis de ambiente necessárias, crie um arquivo .env na raiz do projeto e adicione as seguintes linhas:
+
 ```sh
-python main.py
+MONGO_URI=YOUR_MONGO_URI
+DB_NAME=YOUR_CLUSTER
+COLLECTION_NAME=items
+```
+Isso garantirá que o jogo consiga acessar corretamente o banco de dados MongoDB.
+
+
+### 🔧 Criando seu próprio ambiente MongoDB
+
+Se desejar rodar o jogo localmente com seu próprio banco de dados MongoDB, siga estas etapas:
+
+Adicione sua string de conexão no formato:
+```sh
+mongodb+srv://<username>:<password>@<your-cluster>.mongodb.net/?retryWrites=true&w=majority
 ```
 
+Substitua <username> e <password> pelos seus dados.
+
+Atualize o arquivo .env com sua string de conexão personalizada.
+
+Após essas configurações, seu ambiente estará pronto para rodar o jogo com seu próprio banco de dados MongoDB.
+
+### 4️⃣ Execute o Jogo
+
+'''sh
+python main.py
+'''
