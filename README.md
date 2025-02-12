@@ -142,6 +142,6 @@ Após essas configurações, seu ambiente estará pronto para rodar o jogo com s
 
 ### 4️⃣ Execute o Jogo
 
-'''sh
+```sh
 python main.py
-'''
+```
