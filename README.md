@@ -1,10 +1,11 @@
 # RPG_game.beta
 RPG Game in Python
+
 # 🎮 RPG game (Python + Pygame)
 
-![Game Screenshot](assets/background.png)
+![Game Screenshot](assets/large_background.png)
 
-Um protótipo inspirado em *Diablo 3* feito em **Python** usando **Pygame**, com movimentação, IA de inimigos, ataques, inventário e integração com banco de dados SQLite.
+Um protótipo inspirado em *Diablo 3* feito em **Python** usando **Pygame**, com movimentação, IA de inimigos, ataques, inventário e integração com banco de dados MongoDB.
 
 ---
 
@@ -25,32 +26,52 @@ Este projeto é um protótipo de um **RPG de ação**, semelhante a *Diablo*, co
 - **Ataques básicos** (`SPACE`)
 - **Ataque especial** (`F`)
 - **Defesa de golpes** (`Q`)
+- **Inventáriopara armazenar itens** (`I`)
 - **Inimigos que perseguem o jogador**
 - **Sistema de inventário**
-- **Banco de dados SQLite para gerenciamento de itens** ('Em breve...')
+- **Banco de dados MongoDB para gerenciamento de itens** ('Em breve...')
 
 ---
 
 ## ⚔️ Funcionalidades
-✔️ **Personagem principal movimentável**  
-✔️ **Inimigos com IA simples (seguem o jogador)**  
-✔️ **Ataques corpo a corpo (com cooldown)**  
-✔️ **Inventário para armazenar itens**  
-✔️ **Banco de dados SQLite para registrar os itens**  
-✔️ **Interface HUD com HP, Mana e Inventário**  
+✅ **Personagem principal movimentável**  
+✅ **Inimigos com IA simples (seguem o jogador)**  
+✅ **Ataques corpo a corpo (com cooldown)**  
+✅ **Inventário para armazenar itens**  
+✅ **Banco de dados MongoDB para registrar os itens**  
+✅ **Interface HUD com HP, Mana e Inventário**  
 
 ---
 
 ## 🛠 Tecnologias Usadas
 - **Python 3.11**
 - **Pygame 2.6.1** (para gráficos e jogabilidade)
-- **SQLite3** (para armazenar os itens do jogo)
+- **MongoDB** (para armazenar os itens do jogo)
+
+---
+
+## 💂🏻🛡️ Capturas de Tela
+
+### 📌 Menu Inicial
+![Tela Menu](prints/1-Tela_Menu.png)
+
+### 🎮 Seleção de Modo de Jogo
+![Game Mode](prints/2-Game_mode.png)
+
+### 🔥 Gameplay
+![Game Play](prints/3-Game_Play.png)
+
+### 🧑‍🎒 Inventário
+![Inventário](prints/4-Inventario.png)
+
+### ☠️ Tela de Game Over
+![Game Over](prints/5-Game_Over.png)
 
 ---
 
 ## 📂 Estrutura do Projeto
 ```plaintext
-diablo3_clone/
+Jogo/
 ├── assets/                 # Imagens do jogo
 │   ├── background.png
 │   ├── enemy.png
@@ -66,22 +87,26 @@ diablo3_clone/
 ├── main.py                 # Arquivo principal do jogo
 ├── player.py               # Classe do jogador
 └── settings.py             # Configurações globais do jogo
-▶️ Como Executar
-1️⃣ Clone o repositório
-sh
-Copiar
-Editar
+```
+
+---
+
+## ▶️ Como Executar
+
+### 1️⃣ Clone o repositório
+```sh
 git clone https://github.com/antonioreal97/RPG_game.beta.git
 cd diablo3-clone
-2️⃣ Instale as dependências
-Certifique-se de que tem o Python instalado e instale o Pygame:
+```
 
-sh
-Copiar
-Editar
+### 2️⃣ Instale as dependências
+Certifique-se de que tem o Python instalado e instale o Pygame:
+```sh
 pip install pygame
-3️⃣ Execute o jogo
-sh
-Copiar
-Editar
+```
+
+### 3️⃣ Execute o jogo
+```sh
 python main.py
+```
+
