@@ -38,7 +38,7 @@ PLAYER_HEALTH = 100
 PLAYER_MAX_HEALTH = 1000
 PLAYER_MANA = 50
 PLAYER_MAX_MANA = 300
-PLAYER_ATTACK_COOLDOWN = 500       # milissegundos
+PLAYER_ATTACK_COOLDOWN = 100       # milissegundos
 PLAYER_DEFENSE_DURATION = 2          # segundos (ao pressionar "Q")
 PLAYER_DEFENSE_REDUCTION = 0.5       # Reduz dano pela metade durante a defesa
 PLAYER_DAMAGE = 25                   # Dano base do jogador
@@ -53,8 +53,8 @@ PLAYER_MANA_REGEN = 15               # Mana regenerada a cada subida de nível
 # Enemy Settings
 # ----------------------
 ENEMY_SPEED = 2
-ENEMY_HEALTH = 60
-ENEMY_DAMAGE = 10
+ENEMY_HEALTH = 50
+ENEMY_DAMAGE = 7
 ENEMY_ATTACK_COOLDOWN = 1000       # milissegundos
 ENEMY_DROP_CHANCE = 0.3            # 30% de chance de dropar um item ao morrer
 ENEMY_FREEZE_DURATION = 1500       # milissegundos que o inimigo fica congelado ao tomar dano
